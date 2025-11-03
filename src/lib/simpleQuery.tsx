@@ -157,8 +157,13 @@ export function useQuery<TData>({
   const latestQueryFn = useRef(queryFn);
   latestQueryFn.current = queryFn;
 
-  const mountedRef = useRef(true);
-  useEffect(() => () => void (mountedRef.current = false), []);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const runQuery = useCallback(async () => {
     const currentKey = queryKeyRef.current;

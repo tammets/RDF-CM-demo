@@ -15,18 +15,18 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 const navigationItems = [
-  { title: "Ülevaade", url: "/", icon: LayoutDashboard },
-  { title: "Õppeained", url: "/subjects", icon: BookOpen },
-  { title: "Teemad", url: "/topics", icon: BookMarked },
-  { title: "Õpiväljundid", url: "/outcomes", icon: Target },
-  { title: "Sirvi õppekava", url: "/browse", icon: FolderTree },
-  { title: "Otsi", url: "/search", icon: Search },
-  { title: "Seosed", url: "/relations", icon: Network },
+  { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Subjects", url: "/subjects", icon: BookOpen },
+  { title: "Topics", url: "/topics", icon: BookMarked },
+  { title: "Learning Outcomes", url: "/outcomes", icon: Target },
+  { title: "Browse Curriculum", url: "/browse", icon: FolderTree },
+  { title: "Search", url: "/search", icon: Search },
+  { title: "Relations", url: "/relations", icon: Network },
 ];
 
 const dataManagement = [
-  { title: "Impordi andmed", url: "/import", icon: Upload },
-  { title: "Ekspordi & API", url: "/export", icon: Download },
+  { title: "Import Data", url: "/import", icon: Upload },
+  { title: "Export & API", url: "/export", icon: Download },
 ];
 
 export default function Layout() {
@@ -55,7 +55,7 @@ export default function Layout() {
             </div>
             <div>
               <h2 className="font-bold text-slate-900 text-lg">EduFlex RDF</h2>
-              <p className="text-xs text-slate-500">Õppekava haldur</p>
+              <p className="text-xs text-slate-500">Curriculum Manager</p>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function Layout() {
         <nav className="flex-1 p-3 overflow-y-auto">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">
-              Õppekava
+              Curriculum
             </p>
             {navigationItems.map((item) => {
               const active = location.pathname === item.url;
@@ -87,7 +87,7 @@ export default function Layout() {
 
           <div className="mt-4">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">
-              Andmehaldus
+              Data Management
             </p>
             {dataManagement.map((item) => {
               const active = location.pathname === item.url;
@@ -121,10 +121,10 @@ export default function Layout() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 text-sm truncate">
-                    {user.full_name || "Kasutaja"}
+                    {user.full_name || "User"}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {user.role || "Toimetaja"}
+                    {user.role || "Editor"}
                   </p>
                 </div>
               </div>
@@ -135,7 +135,7 @@ export default function Layout() {
                 onClick={handleLogout}
               >
                 <LogOut className="w-3 h-3 mr-2" />
-                Logi välja
+                Log Out
               </Button>
             </div>
           ) : null}

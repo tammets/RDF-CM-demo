@@ -4,14 +4,14 @@ import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/ap
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download, Code, FileJson, Copy, Check, ExternalLink, Book } from "lucide-react";
+import { Download, Code, Copy, Check, ExternalLink, Book } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type ExportFormat = "json-ld" | "turtle" | "json";
+const PREVIEW_LINE_LIMIT = 20;
 
 export default function Export() {
   const [copied, setCopied] = useState(false);
@@ -367,13 +367,19 @@ eduschema:totalItems a owl:DatatypeProperty ;
   };
 
   const previewPayload = getExportPayload();
+  const previewLines = previewPayload.content.split("\n");
+  const truncatedPreview =
+    previewLines.length > PREVIEW_LINE_LIMIT
+      ? `${previewLines.slice(0, PREVIEW_LINE_LIMIT).join("\n")}\n...\n(Preview truncated. Download for full content.)`
+      : previewPayload.content;
+  const previewIsTruncated = previewLines.length > PREVIEW_LINE_LIMIT;
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Eksport & API</h1>
-          <p className="text-slate-600">Ekspordi õppekava andmed masinloetavates formaatides</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Export & API</h1>
+          <p className="text-slate-600">Export curriculum data in machine-readable formats</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -382,16 +388,16 @@ eduschema:totalItems a owl:DatatypeProperty ;
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Code className="w-5 h-5 text-indigo-600" />
-                  Ekspordi andmed
+                  Export Data
                 </span>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={copyToClipboard}>
                     {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                    {copied ? 'Kopeeritud!' : 'Kopeeri'}
+                    {copied ? "Copied!" : "Copy"}
                   </Button>
                   <Button size="sm" onClick={downloadFile} className="bg-indigo-600 hover:bg-indigo-700">
                     <Download className="w-4 h-4 mr-2" />
-                    Lae alla
+                    Download
                   </Button>
                 </div>
               </CardTitle>
@@ -404,22 +410,27 @@ eduschema:totalItems a owl:DatatypeProperty ;
                 <TabsList className="grid grid-cols-3 mb-4">
                   <TabsTrigger value="json-ld">JSON-LD</TabsTrigger>
                   <TabsTrigger value="turtle">Turtle (RDF)</TabsTrigger>
-                  <TabsTrigger value="json">Lihtne JSON</TabsTrigger>
+                  <TabsTrigger value="json">Simple JSON</TabsTrigger>
                 </TabsList>
                 
                 <Alert className="mb-4 bg-blue-50 border-blue-200">
                   <AlertDescription className="text-sm text-blue-900">
-                    <strong>Märkus:</strong> JSON-LD ja Turtle sisaldavad identset semantilist sisu. 
-                    JSON-LD on soovitatav API integratsioonideks; Turtle on ideaalne täielikuks andmevahetuseks.
+                    <strong>Note:</strong> JSON-LD and Turtle contain identical semantic content.
+                    JSON-LD works best for API integrations; Turtle is ideal for full RDF data exchange.
                   </AlertDescription>
                 </Alert>
 
                 <div className="relative">
                   <Textarea
-                    value={previewPayload.content}
+                    value={truncatedPreview}
                     readOnly
                     className="font-mono text-xs h-[500px] bg-slate-900 text-green-400 border-slate-700"
                   />
+                  {previewIsTruncated ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Showing the first 20 lines. Download to view the full export.
+                    </p>
+                  ) : null}
                 </div>
 
                 {format === 'json-ld' && (
@@ -428,17 +439,17 @@ eduschema:totalItems a owl:DatatypeProperty ;
                       <DialogTrigger asChild>
                         <Button variant="link" className="p-0 h-auto flex items-center gap-2 text-blue-600 hover:text-blue-700">
                           <Book className="w-4 h-4" />
-                          Vaata RDF skeemi
+                          View RDF schema
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>RDF Skeem (Turtle)</DialogTitle>
+                          <DialogTitle>RDF Schema (Turtle)</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <Alert className="bg-blue-50 border-blue-200">
                             <AlertDescription className="text-sm text-blue-900">
-                              See skeem defineerib RDF struktuuri, mida kasutatakse õppekava andmete eksportimisel.
+                              This schema defines the RDF structure used when exporting curriculum data.
                             </AlertDescription>
                           </Alert>
                           <Textarea
@@ -457,7 +468,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
                             className="w-full"
                           >
                             <Copy className="w-4 h-4 mr-2" />
-                            Kopeeri skeem
+                            Copy schema
                           </Button>
                         </div>
                       </DialogContent>
@@ -472,49 +483,15 @@ eduschema:totalItems a owl:DatatypeProperty ;
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileJson className="w-5 h-5 text-blue-600" />
-                  Ekspordi statistika
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Õppeained</span>
-                  <Badge variant="secondary">{subjects.length}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Teemad</span>
-                  <Badge variant="secondary">{topics.length}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Õpiväljundid</span>
-                  <Badge variant="secondary">{outcomes.length}</Badge>
-                </div>
-                <div className="pt-3 border-t border-slate-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600 font-medium">Kokku kirjeid</span>
-                    <Badge className="bg-blue-600">{subjects.length + topics.length + outcomes.length}</Badge>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500">
-                    Eksporditud: {new Date().toLocaleDateString('et-EE')}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>API lõpp-punktid</span>
-                  <a 
-                    href="/api/docs" 
+                  <span>API Endpoints</span>
+                  <a
+                    href="/api/docs"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                   >
-                    Dokumentatsioon
+                    Documentation
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </CardTitle>
@@ -522,46 +499,45 @@ eduschema:totalItems a owl:DatatypeProperty ;
               <CardContent className="space-y-3">
                 <div className="p-3 bg-slate-50 rounded-lg">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/subjects</p>
-                  <p className="text-xs text-slate-500">Kõik õppeained</p>
+                  <p className="text-xs text-slate-500">List all subjects</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/topics</p>
-                  <p className="text-xs text-slate-500">Kõik teemad</p>
+                  <p className="text-xs text-slate-500">List all topics</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/outcomes</p>
-                  <p className="text-xs text-slate-500">Kõik õpiväljundid</p>
+                  <p className="text-xs text-slate-500">List all learning outcomes</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/outcomes/:id</p>
-                  <p className="text-xs text-slate-500">Üks õpiväljund koos seostega</p>
+                  <p className="text-xs text-slate-500">Single learning outcome with relations</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg border-2 border-indigo-200">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/export.jsonld</p>
-                  <p className="text-xs text-slate-500">Täielik eksport JSON-LD vormingus</p>
+                  <p className="text-xs text-slate-500">Full export in JSON-LD format</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg border-2 border-indigo-200">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/export.ttl</p>
-                  <p className="text-xs text-slate-500">Täielik eksport Turtle (RDF) vormingus</p>
+                  <p className="text-xs text-slate-500">Full export in Turtle (RDF) format</p>
                 </div>
                 <div className="pt-3 border-t border-slate-200">
                   <p className="text-xs text-slate-500">
-                    Kõik ekspordinupud kasutavad samu API otspunkte, tagades järjepidevuse liidese ja 
-                    väliste integratsioonide vahel.
+                    All export actions call the same API endpoints, keeping the UI and integrations aligned.
                   </p>
                 </div>
                 <div className="pt-2">
-                  <p className="text-xs text-slate-600 font-medium mb-1">Päringute parameetrid:</p>
+                  <p className="text-xs text-slate-600 font-medium mb-1">Query parameters:</p>
                   <p className="text-xs text-slate-500">
-                    <code className="bg-slate-100 px-1 py-0.5 rounded">?include=expects,consistsOf</code> – 
-                    lisa seosed
+                    <code className="bg-slate-100 px-1 py-0.5 rounded">?include=expects,consistsOf</code> -
+                    include relation identifiers
                   </p>
                 </div>
                 <div className="pt-2">
-                  <p className="text-xs text-slate-600 font-medium mb-1">Accept päised:</p>
+                  <p className="text-xs text-slate-600 font-medium mb-1">Accept headers:</p>
                   <p className="text-xs text-slate-500">
                     <code className="bg-slate-100 px-1 py-0.5 rounded">application/ld+json</code>
-                    {' '}või{' '}
+                    {" "}or{" "}
                     <code className="bg-slate-100 px-1 py-0.5 rounded">text/turtle</code>
                   </p>
                 </div>
@@ -570,35 +546,32 @@ eduschema:totalItems a owl:DatatypeProperty ;
 
             <Card>
               <CardHeader>
-                <CardTitle>Formaadi informatsioon</CardTitle>
+                <CardTitle>Format Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-600">
                 <div>
                   <p className="font-medium text-slate-900 mb-1">JSON-LD</p>
                   <p className="text-xs">
-                    Linked Data vorming koos RDF kontekstiga (soovitatav integratsioonideks). 
-                    Sisaldab täielikku semantilist struktuuri ja seoseid.
+                    Linked Data format with an RDF context, recommended for integrations that need semantic structure.
                   </p>
                 </div>
                 <div>
                   <p className="font-medium text-slate-900 mb-1">Turtle (RDF)</p>
                   <p className="text-xs">
-                    Kompaktne inimloetav semantilise graafi vorming. Ideaalne täielikuks 
-                    andmevahetuseks ja RDF tööriistu kasutamiseks.
+                    Compact, human-readable RDF notation. Ideal for full data exchange and RDF toolchains.
                   </p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900 mb-1">Lihtne JSON</p>
+                  <p className="font-medium text-slate-900 mb-1">Simple JSON</p>
                   <p className="text-xs">
-                    Põhiline andmete eksport ilma RDF kontekstita. Sobib lihtsateks 
-                    integratsioonideks, kus ei ole vaja semantilist struktuuri.
+                    Basic export without RDF context. Useful for lightweight integrations that do not require semantics.
                   </p>
                 </div>
                 <div className="pt-3 border-t border-slate-200">
                   <p className="text-xs text-slate-500">
-                    <strong>Märkus:</strong> Kõik ekspordid on versioonitud; iga eksport sisaldab 
-                    <code className="bg-slate-100 px-1 py-0.5 rounded mx-1">generatedAtTime</code> 
-                    omadust ajatemplit.
+                    <strong>Note:</strong> All exports are versioned and include a
+                    <code className="bg-slate-100 px-1 py-0.5 rounded mx-1">generatedAtTime</code>
+                    timestamp.
                   </p>
                 </div>
               </CardContent>
