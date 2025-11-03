@@ -1,0 +1,43 @@
+{
+  "name": "Topic",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Topic name"
+    },
+    "name_et": {
+      "type": "string",
+      "description": "Topic name in Estonian"
+    },
+    "description": {
+      "type": "string",
+      "description": "Topic description"
+    },
+    "uri": {
+      "type": "string",
+      "description": "RDF URI for this topic"
+    },
+    "subject_id": {
+      "type": "string",
+      "description": "Reference to parent Subject"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "Order within subject"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published"
+      ],
+      "default": "draft",
+      "description": "Publication status"
+    }
+  },
+  "required": [
+    "name",
+    "subject_id"
+  ]
+}

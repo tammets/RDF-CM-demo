@@ -1,0 +1,16 @@
+[
+  {
+    "id":"lo-1",
+    "topic_id":"topic-algebra",
+    "text_et":"Kasutab harilike murdudega tehteid sooritades ühiskordse ja ühisteguri leidmist",
+    "school_level":"III",
+    "status":"published"
+  },
+  {
+    "id":"lo-2",
+    "topic_id":"topic-software",
+    "text_et":"Dokumenteerib loodud rakendused inglise keeles",
+    "school_level":"Gymnasium",
+    "status":"published"
+  }
+]

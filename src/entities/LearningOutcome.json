@@ -1,0 +1,73 @@
+{
+  "name": "LearningOutcome",
+  "type": "object",
+  "properties": {
+    "text_et": {
+      "type": "string",
+      "description": "\u00d5piv\u00e4ljundi tekst eesti keeles"
+    },
+    "uri": {
+      "type": "string",
+      "description": "RDF URI (automaatselt genereeritud)"
+    },
+    "topic_id": {
+      "type": "string",
+      "description": "Viide vanemteemale"
+    },
+    "school_level": {
+      "type": "string",
+      "enum": [
+        "I",
+        "II",
+        "III",
+        "Gymnasium",
+        "University",
+        "All"
+      ],
+      "description": "Kooliaste (I=1-3 klass, II=4-6 klass, III=7-9 klass, Gymnasium=10-12 klass)"
+    },
+    "class": {
+      "type": "string",
+      "description": "Konkreetne klass (nt '7', '8', '9')"
+    },
+    "related_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Seotud \u00f5piv\u00e4ljundite ID-d"
+    },
+    "expects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Eeldatavate \u00f5piv\u00e4ljundite ID-d"
+    },
+    "consists_of": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ala\u00f5piv\u00e4ljundite ID-d"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "J\u00e4rjekord teemas"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published"
+      ],
+      "default": "draft",
+      "description": "Avaldamise olek"
+    }
+  },
+  "required": [
+    "text_et",
+    "topic_id",
+    "school_level"
+  ]
+}

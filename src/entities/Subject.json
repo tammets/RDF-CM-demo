@@ -1,0 +1,38 @@
+{
+  "name": "Subject",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Subject name (e.g., Mathematics, Estonian Language)"
+    },
+    "name_et": {
+      "type": "string",
+      "description": "Subject name in Estonian"
+    },
+    "description": {
+      "type": "string",
+      "description": "Subject description"
+    },
+    "uri": {
+      "type": "string",
+      "description": "RDF URI for this subject"
+    },
+    "code": {
+      "type": "string",
+      "description": "Short code for the subject"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published"
+      ],
+      "default": "draft",
+      "description": "Publication status"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
