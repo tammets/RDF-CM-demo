@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from "react";
-import { base44, type Subject, type Topic, type LearningOutcome } from "@/api/base44Client";
+import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export default function Import() {
         for (const subject of data.subjects) {
           if (!subject?.name) continue;
 
-          await base44.entities.Subject.create({
+          await curriculum.entities.Subject.create({
             name: subject.name,
             name_et: subject.name_et,
             description: subject.description,
@@ -76,7 +76,7 @@ export default function Import() {
         for (const topic of data.topics) {
           if (!topic?.name || !topic.subject_id) continue;
 
-          await base44.entities.Topic.create({
+          await curriculum.entities.Topic.create({
             name: topic.name,
             name_et: topic.name_et,
             description: topic.description,
@@ -94,7 +94,7 @@ export default function Import() {
         for (const outcome of data.outcomes) {
           if (!outcome?.topic_id) continue;
 
-          await base44.entities.LearningOutcome.create({
+          await curriculum.entities.LearningOutcome.create({
             text: outcome.text,
             text_et: outcome.text_et,
             topic_id: outcome.topic_id,
@@ -136,7 +136,7 @@ export default function Import() {
 
     try {
       // Create Mathematics subject
-      const mathSubject = await base44.entities.Subject.create({
+      const mathSubject = await curriculum.entities.Subject.create({
         name: 'Mathematics',
         name_et: 'Matemaatika',
         description: 'Mathematics curriculum for Estonian schools',
@@ -146,7 +146,7 @@ export default function Import() {
       });
 
       // Create Algebra topic
-      const algebraTopic = await base44.entities.Topic.create({
+      const algebraTopic = await curriculum.entities.Topic.create({
         name: 'Algebra',
         name_et: 'Algebra',
         description: 'Algebraic operations and expressions',
@@ -179,7 +179,7 @@ export default function Import() {
       ];
 
       for (const [index, outcome] of outcomes.entries()) {
-        await base44.entities.LearningOutcome.create({
+        await curriculum.entities.LearningOutcome.create({
           ...outcome,
           topic_id: algebraTopic.id,
           uri: `https://oppekava.edu.ee/outcomes/algebra-${index + 1}`,

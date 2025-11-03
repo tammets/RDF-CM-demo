@@ -1,6 +1,6 @@
 
 import { useState, type FormEvent } from "react";
-import { base44, type Subject, type Topic as TopicEntity } from "@/api/base44Client";
+import { curriculum, type Subject, type Topic as TopicEntity } from "@/api/curriculumClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,18 +41,16 @@ export default function Topics() {
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list(),
   });
 
   const { data: topics = [], isLoading } = useQuery<TopicEntity[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list("-created_date"),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list("-created_date"),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: TopicFormData) => base44.entities.Topic.create(data),
+    mutationFn: (data: TopicFormData) => curriculum.entities.Topic.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topics"] });
       setOpen(false);
@@ -62,7 +60,7 @@ export default function Topics() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: TopicFormData }) =>
-      base44.entities.Topic.update(id, data),
+      curriculum.entities.Topic.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topics"] });
       setOpen(false);
@@ -71,7 +69,7 @@ export default function Topics() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => base44.entities.Topic.delete(id),
+    mutationFn: (id: string) => curriculum.entities.Topic.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topics"] });
     },

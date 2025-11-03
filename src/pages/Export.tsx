@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { base44, type Subject, type Topic, type LearningOutcome } from "@/api/base44Client";
+import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,20 +20,17 @@ export default function Export() {
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list(),
   });
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list(),
   });
 
   const { data: outcomes = [] } = useQuery<LearningOutcome[]>({
     queryKey: ["outcomes"],
-    queryFn: () => base44.entities.LearningOutcome.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
   const rdfSchema = `@prefix eduschema: <https://oppekava.edu.ee/schema/> .

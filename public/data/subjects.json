@@ -1,4 +1,416 @@
 [
-  {"id":"subj-math","name":"Mathematics","code":"MATH","status":"published"},
-  {"id":"subj-prog","name":"Programming","code":"PROG","status":"published"}
+  {
+    "id": "a-voorkeel",
+    "name": "A-võõrkeel",
+    "name_et": "A-võõrkeel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "ajalugu",
+    "name": "Ajalugu",
+    "name_et": "Ajalugu",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "bioloogia",
+    "name": "Bioloogia",
+    "name_et": "Bioloogia",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "eesti-keel",
+    "name": "Eesti keel",
+    "name_et": "Eesti keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "fuusika",
+    "name": "Füüsika",
+    "name_et": "Füüsika",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "geo",
+    "name": "Geo",
+    "name_et": "Geo",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "geograafia",
+    "name": "Geograafia",
+    "name_et": "Geograafia",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "keemia",
+    "name": "Keemia",
+    "name_et": "Keemia",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kehaline-kasvatus",
+    "name": "Kehaline kasvatus",
+    "name_et": "Kehaline kasvatus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kirjandus",
+    "name": "Kirjandus",
+    "name_et": "Kirjandus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kodundus",
+    "name": "Kodundus",
+    "name_et": "Kodundus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kunst",
+    "name": "Kunst",
+    "name_et": "Kunst",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kunstiopetus-iii-kooliaste",
+    "name": "Kunstiõpetus: III kooliaste",
+    "name_et": "Kunstiõpetus: III kooliaste",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kasitoo",
+    "name": "Käsitöö",
+    "name_et": "Käsitöö",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "loodusopetus",
+    "name": "Loodusõpetus",
+    "name_et": "Loodusõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "matemaatika",
+    "name": "Matemaatika",
+    "name_et": "Matemaatika",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "muusika",
+    "name": "Muusika",
+    "name_et": "Muusika",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "tehnoloogiaopetus",
+    "name": "Tehnoloogiaõpetus",
+    "name_et": "Tehnoloogiaõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "opiraja-taristu-alused",
+    "name": "Õpiraja taristu alused",
+    "name_et": "Õpiraja taristu alused",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "uhiskonnaopetus",
+    "name": "Ühiskonnaõpetus",
+    "name_et": "Ühiskonnaõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "eesti-keel-teise-keelena",
+    "name": "Eesti keel teise keelena",
+    "name_et": "Eesti keel teise keelena",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "emakeel-eesti-keel",
+    "name": "Emakeel (eesti keel)",
+    "name_et": "Emakeel (eesti keel)",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "informaatika",
+    "name": "Informaatika",
+    "name_et": "Informaatika",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "inglise-keel",
+    "name": "Inglise keel",
+    "name_et": "Inglise keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "inglise-keel-voorkeel",
+    "name": "Inglise keel (võõrkeel)",
+    "name_et": "Inglise keel (võõrkeel)",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "inimeseopetus",
+    "name": "Inimeseõpetus",
+    "name_et": "Inimeseõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "keel-ja-kone",
+    "name": "Keel ja kõne",
+    "name_et": "Keel ja kõne",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kodakondsus",
+    "name": "Kodakondsus",
+    "name_et": "Kodakondsus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kognitiivsed-oskused",
+    "name": "Kognitiivsed oskused",
+    "name_et": "Kognitiivsed oskused",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "kuberkaitse",
+    "name": "Küberkaitse",
+    "name_et": "Küberkaitse",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "labivad-teemad",
+    "name": "Läbivad teemad",
+    "name_et": "Läbivad teemad",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "prantsuse-keel",
+    "name": "Prantsuse keel",
+    "name_et": "Prantsuse keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "prantsuse-keel-voorkeel",
+    "name": "Prantsuse keel (võõrkeel)",
+    "name_et": "Prantsuse keel (võõrkeel)",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "rootsi-keel",
+    "name": "Rootsi keel",
+    "name_et": "Rootsi keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "saksa-keel",
+    "name": "Saksa keel",
+    "name_et": "Saksa keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "saksa-keel-voorkeel",
+    "name": "Saksa keel (võõrkeel)",
+    "name_et": "Saksa keel (võõrkeel)",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "soome-keel",
+    "name": "Soome keel",
+    "name_et": "Soome keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "tooopetus",
+    "name": "Tööõpetus",
+    "name_et": "Tööõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "usundiopetus",
+    "name": "Usundiõpetus",
+    "name_et": "Usundiõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "valikkursused",
+    "name": "Valikkursused",
+    "name_et": "Valikkursused",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "vene-keel",
+    "name": "Vene keel",
+    "name_et": "Vene keel",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "vene-keel-voorkeel",
+    "name": "Vene keel (võõrkeel)",
+    "name_et": "Vene keel (võõrkeel)",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "vene-keel-emakeelena",
+    "name": "Vene keel emakeelena",
+    "name_et": "Vene keel emakeelena",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "y-sisseastumine",
+    "name": "Y-Sisseastumine",
+    "name_et": "Y-Sisseastumine",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "opipadevus",
+    "name": "Õpipädevus",
+    "name_et": "Õpipädevus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  },
+  {
+    "id": "uldopetus",
+    "name": "Üldõpetus",
+    "name_et": "Üldõpetus",
+    "status": "published",
+    "description": null,
+    "code": null,
+    "uri": null
+  }
 ]

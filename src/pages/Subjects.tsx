@@ -1,6 +1,6 @@
 
 import { useState, type FormEvent } from "react";
-import { base44, type Subject } from "@/api/base44Client";
+import { curriculum, type Subject } from "@/api/curriculumClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,12 +38,11 @@ export default function Subjects() {
 
   const { data: subjects = [], isLoading } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list("-created_date"),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list("-created_date"),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: SubjectFormData) => base44.entities.Subject.create(data),
+    mutationFn: (data: SubjectFormData) => curriculum.entities.Subject.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
       setOpen(false);
@@ -53,7 +52,7 @@ export default function Subjects() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: SubjectFormData }) =>
-      base44.entities.Subject.update(id, data),
+      curriculum.entities.Subject.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
       setOpen(false);
@@ -62,7 +61,7 @@ export default function Subjects() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => base44.entities.Subject.delete(id),
+    mutationFn: (id: string) => curriculum.entities.Subject.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
     },

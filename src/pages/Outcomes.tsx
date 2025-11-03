@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import {
-  base44,
+  curriculum,
   type LearningOutcome as OutcomeEntity,
   type Subject,
   type Topic,
-} from "@/api/base44Client";
+} from "@/api/curriculumClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,25 +44,22 @@ export default function Outcomes() {
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list(),
   });
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list(),
   });
 
   const { data: outcomes = [], isLoading } = useQuery<OutcomeEntity[]>({
     queryKey: ["outcomes"],
-    queryFn: () => base44.entities.LearningOutcome.list("-created_date"),
-    initialData: [],
+    queryFn: () => curriculum.entities.LearningOutcome.list("-created_date"),
   });
 
   const createMutation = useMutation({
     mutationFn: (data: OutcomeFormData & { uri: string }) =>
-      base44.entities.LearningOutcome.create(data),
+      curriculum.entities.LearningOutcome.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outcomes"] });
       setOpen(false);
@@ -72,7 +69,7 @@ export default function Outcomes() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: OutcomeFormData & { uri: string } }) =>
-      base44.entities.LearningOutcome.update(id, data),
+      curriculum.entities.LearningOutcome.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outcomes"] });
       setOpen(false);
@@ -81,7 +78,7 @@ export default function Outcomes() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => base44.entities.LearningOutcome.delete(id),
+    mutationFn: (id: string) => curriculum.entities.LearningOutcome.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outcomes"] });
     },

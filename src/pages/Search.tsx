@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import {
-  base44,
+  curriculum,
   type Subject,
   type Topic,
   type LearningOutcome,
-} from "@/api/base44Client";
+} from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,20 +51,17 @@ export default function Search() {
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list(),
   });
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list(),
   });
 
   const { data: outcomes = [] } = useQuery<LearningOutcome[]>({
     queryKey: ["outcomes"],
-    queryFn: () => base44.entities.LearningOutcome.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
   const getSubjectName = (subjectId: string) => {

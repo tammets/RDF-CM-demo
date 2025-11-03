@@ -115,7 +115,7 @@ export function useQuery<TData>({
   const queryKeyRef = useRef<QueryKey>(queryKey);
   useEffect(() => {
     queryKeyRef.current = queryKey;
-  }, [keyHash, queryKey]);
+  }, [keyHash]);
 
   const queryClient = useQueryClient();
   const [state, setState] = useState<{
@@ -212,7 +212,7 @@ export function useQuery<TData>({
     });
 
     return unsubscribe;
-  }, [initialData, queryClient, keyHash, runQuery]);
+  }, [queryClient, keyHash, runQuery]);
 
   return {
     data: state.data,

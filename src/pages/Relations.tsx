@@ -1,6 +1,6 @@
 
 import { useMemo, useState } from "react";
-import { base44, type LearningOutcome, type Topic } from "@/api/base44Client";
+import { curriculum, type LearningOutcome, type Topic } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,14 +21,12 @@ export default function Relations() {
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list(),
   });
 
   const { data: outcomes = [] } = useQuery<LearningOutcome[]>({
     queryKey: ["outcomes"],
-    queryFn: () => base44.entities.LearningOutcome.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
   const getTopicName = (topicId: string) => {

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
-import type { LearningOutcome } from "@/api/base44Client";
+import type { LearningOutcome } from "@/api/curriculumClient";
 
 type Outcome = LearningOutcome;
 

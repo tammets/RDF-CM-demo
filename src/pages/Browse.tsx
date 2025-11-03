@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44, type Subject, type Topic, type LearningOutcome } from "@/api/base44Client";
+import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,20 +13,17 @@ export default function Browse() {
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
-    queryFn: () => base44.entities.Subject.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Subject.list(),
   });
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
-    queryFn: () => base44.entities.Topic.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.Topic.list(),
   });
 
   const { data: outcomes = [] } = useQuery<LearningOutcome[]>({
     queryKey: ["outcomes"],
-    queryFn: () => base44.entities.LearningOutcome.list(),
-    initialData: [],
+    queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
   const toggleSubject = (subjectId: string) => {
