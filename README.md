@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# RDF Curriculum Manager (prototype)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository contains a prototype UI for managing the Estonian national curriculum as RDF/JSON-LD data. The app focuses on quick editorial workflows for subjects, topics, and learning outcomes, with English-language UI copy throughout.
 
-Currently, two official plugins are available:
+## Key features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dashboard overview** with published counts and guided quick actions.
+- **CRUD tooling** for Subjects, Topics, and Learning Outcomes backed by React Query and a local in-browser dataset (`src/api/curriculumClient.ts`).
+- **Pagination** for Topics and Learning Outcomes to keep the UI responsive on larger datasets.
+- **RDF-focused export page** with JSON-LD, Turtle, and simple JSON previews, plus schema reference and one-click download/copy actions.
+- **Static prototype data** persisted via `localStorage` so edits stick between refreshes without a backend.
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- [Vite 7](https://vite.dev/) for dev/build tooling
+- [React Router](https://reactrouter.com/) for client-side routing
+- [@tanstack/react-query](https://tanstack.com/query/latest) for client-side data access and caching
+- [Tailwind CSS v4](https://tailwindcss.com/) (via the official Vite plugin)
+- [lucide-react](https://lucide.dev/) icon set
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app starts on http://localhost:5173 by default. Use the sidebar to navigate between sections. All data is seeded from `curriculumClient` and stored in localStorage; use your browser devtools to clear it if you want a fresh start.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build & preview
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
 ```
+
+## Project structure
+
+- `src/pages/*` – Feature pages (Dashboard, Subjects, Topics, Outcomes, Export, etc.)
+- `src/layout/Layout.tsx` – Sidebar shell shared by all routes
+- `src/api/curriculumClient.ts` – In-memory/localStorage curriculum dataset and helper functions
+- `src/components/*` – Reusable UI widgets
+
+## Roadmap ideas
+
+- Hook the CRUD flows up to a real API
+- Implement role-based auth and audit trails
+- Expand export options (filters, version history)
+
+Feel free to fork and adapt this prototype for your own curriculum management experiments. Suggestions and contributions are welcome!

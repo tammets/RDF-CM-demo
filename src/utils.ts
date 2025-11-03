@@ -6,7 +6,6 @@ const routeMap = {
   Browse: "browse",
   Search: "search",
   Relations: "relations",
-  Import: "import",
   Export: "export",
 } as const;
 

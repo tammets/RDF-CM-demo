@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
 
 export default function Dashboard() {
@@ -54,6 +53,29 @@ export default function Dashboard() {
     },
   ];
 
+  const quickActions = [
+    {
+      label: "Add New Subject",
+      description: "Create a subject to group related topics.",
+      link: createPageUrl("Subjects"),
+    },
+    {
+      label: "Add New Topic",
+      description: "Organise learning outcomes within a subject.",
+      link: createPageUrl("Topics"),
+    },
+    {
+      label: "Add Learning Outcome",
+      description: "Capture measurable outcomes for each topic.",
+      link: createPageUrl("Outcomes"),
+    },
+    {
+      label: "Export as RDF/JSON-LD",
+      description: "Download data for sharing and integrations.",
+      link: createPageUrl("Export"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -95,7 +117,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card className="border-slate-200 bg-white shadow-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900">
+              <CardTitle className="mb-2 flex items-center gap-2 text-slate-900">
                 <FileText className="h-5 w-5 text-blue-600" />
                 Welcome to the RDF Curriculum Manager
               </CardTitle>
@@ -109,33 +131,31 @@ export default function Dashboard() {
                 <ul className="list-disc space-y-2 pl-6">
                   <li>Create and manage subjects, topics, and learning outcomes.</li>
                   <li>Monitor drafts versus published content to keep the curriculum up to date.</li>
-                  <li>Import existing structures from JSON and export your work as RDF/JSON-LD.</li>
+                  <li>Export your work as RDF/JSON-LD for downstream integrations.</li>
                 </ul>
-                <p>Not sure where to begin? Use the quick actions to add new items or import existing data.</p>
+                <p>Not sure where to begin? Use the quick actions to add new items or review exports.</p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 bg-white shadow-md">
             <CardHeader>
-              <CardTitle className="text-slate-900">Quick Actions</CardTitle>
+              <CardTitle className="mb-2 text-slate-900">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link to={createPageUrl("Subjects")}>
-                <Button className="w-full justify-start">Add New Subject</Button>
-              </Link>
-              <Link to={createPageUrl("Topics")}>
-                <Button className="w-full justify-start">Add New Topic</Button>
-              </Link>
-              <Link to={createPageUrl("Outcomes")}>
-                <Button className="w-full justify-start">Add Learning Outcome</Button>
-              </Link>
-              <Link to={createPageUrl("Import")}>
-                <Button className="w-full justify-start">Import JSON Data</Button>
-              </Link>
-              <Link to={createPageUrl("Export")}>
-                <Button className="w-full justify-start">Export as RDF/JSON-LD</Button>
-              </Link>
+              {quickActions.map((action) => (
+                <Link key={action.label} to={action.link} className="block">
+                  <div className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition hover:bg-white hover:shadow-sm">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-slate-900">{action.label}</p>
+                      <p className="text-xs text-slate-500">{action.description}</p>
+                    </div>
+                    <span className="text-sm text-slate-400 group-hover:text-slate-600" aria-hidden="true">
+                      &rsaquo;
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </CardContent>
           </Card>
         </div>

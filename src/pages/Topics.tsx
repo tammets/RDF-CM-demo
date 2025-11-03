@@ -1,5 +1,5 @@
 
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, useEffect, type FormEvent } from "react";
 import { curriculum, type Subject, type Topic as TopicEntity } from "@/api/curriculumClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +23,13 @@ type TopicFormData = {
   status: "draft" | "published";
 };
 
+const PAGE_SIZE = 20;
+
 export default function Topics() {
   const [open, setOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<TopicEntity | null>(null);
   const [filterSubject, setFilterSubject] = useState<string>("all");
+  const [page, setPage] = useState(1);
   const [formData, setFormData] = useState<TopicFormData>({
     name: "",
     name_et: "",
@@ -112,26 +115,61 @@ export default function Topics() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Kas oled kindel, et soovid selle teema kustutada?")) {
+    if (window.confirm("Are you sure you want to delete this topic?")) {
       void deleteMutation.mutate(id);
     }
   };
 
   const getSubjectName = (subjectId: string) => {
     const subject = subjects.find((item) => item.id === subjectId);
-    return subject ? subject.name_et || subject.name : "Teadmata";
+    return subject ? subject.name_et || subject.name : "Unknown subject";
   };
 
-  const filteredTopics =
-    filterSubject === "all" ? topics : topics.filter((topic) => topic.subject_id === filterSubject);
+  const filteredTopics = useMemo(
+    () =>
+      (filterSubject === "all"
+        ? topics
+        : topics.filter((topic) => topic.subject_id === filterSubject)),
+    [topics, filterSubject],
+  );
+
+  useEffect(() => {
+    const total = Math.max(1, Math.ceil(filteredTopics.length / PAGE_SIZE));
+    if (page > total) {
+      setPage(total);
+    }
+  }, [filteredTopics.length, page]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTopics.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedTopics = useMemo(
+    () => filteredTopics.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filteredTopics, currentPage],
+  );
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const startItem = filteredTopics.length === 0 ? 0 : startIndex + 1;
+  const endItem = Math.min(startIndex + PAGE_SIZE, filteredTopics.length);
+
+  const handlePreviousPage = () => {
+    setPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
+  const handleSubjectFilterChange = (value: string) => {
+    setFilterSubject(value);
+    setPage(1);
+  };
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Teemad</h1>
-            <p className="text-slate-600 mt-1">Halda õppekava teemasid õppeainete sees</p>
+            <h1 className="text-3xl font-bold text-slate-900">Topics</h1>
+            <p className="text-slate-600 mt-1">Manage curriculum topics within each subject</p>
           </div>
           <Dialog open={open} onOpenChange={(isOpen) => {
             setOpen(isOpen);
@@ -140,23 +178,23 @@ export default function Topics() {
             <DialogTrigger asChild>
               <Button className="bg-indigo-600 hover:bg-indigo-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Lisa teema
+                Add Topic
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editingTopic ? 'Muuda teemat' : 'Lisa uus teema'}</DialogTitle>
+                <DialogTitle>{editingTopic ? "Edit Topic" : "Add Topic"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="subject_id">Õppeaine *</Label>
+                  <Label htmlFor="subject_id">Subject *</Label>
                   <Select 
                     value={formData.subject_id} 
                     onValueChange={(value) => setFormData({ ...formData, subject_id: value })}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Vali õppeaine" />
+                      <SelectValue placeholder="Select subject" />
                     </SelectTrigger>
                     <SelectContent>
                       {subjects.map((subject) => (
@@ -169,38 +207,38 @@ export default function Topics() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nimi (inglise keeles) *</Label>
+                    <Label htmlFor="name">Name (English) *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="nt Algebra"
+                      placeholder="e.g. Algebra"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="name_et">Nimi (eesti keeles)</Label>
+                    <Label htmlFor="name_et">Name (Estonian)</Label>
                     <Input
                       id="name_et"
                       value={formData.name_et}
                       onChange={(e) => setFormData({ ...formData, name_et: e.target.value })}
-                      placeholder="nt Algebra"
+                      placeholder="e.g. Algebra"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Kirjeldus</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Teema kirjeldus"
+                    placeholder="Topic description"
                     rows={3}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="order_index">Järjekord</Label>
+                    <Label htmlFor="order_index">Display order</Label>
                     <Input
                       id="order_index"
                       type="number"
@@ -215,7 +253,7 @@ export default function Topics() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="status">Olek</Label>
+                    <Label htmlFor="status">Status</Label>
                     <Select
                       value={formData.status}
                       onValueChange={(value) =>
@@ -226,8 +264,8 @@ export default function Topics() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="draft">Mustand</SelectItem>
-                        <SelectItem value="published">Avaldatud</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -238,15 +276,15 @@ export default function Topics() {
                     id="uri"
                     value={formData.uri}
                     onChange={(e) => setFormData({ ...formData, uri: e.target.value })}
-                    placeholder="nt https://oppekava.edu.ee/topics/algebra"
+                    placeholder="e.g. https://oppekava.edu.ee/topics/algebra"
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                    Tühista
+                    Cancel
                   </Button>
                   <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-                    {editingTopic ? 'Uuenda' : 'Loo'} teema
+                    {editingTopic ? "Update" : "Create"} topic
                   </Button>
                 </div>
               </form>
@@ -259,16 +297,16 @@ export default function Topics() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <BookMarked className="w-5 h-5 text-indigo-600" />
-                Kõik teemad
+                All Topics
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-slate-500" />
-                <Select value={filterSubject} onValueChange={setFilterSubject}>
+                <Select value={filterSubject} onValueChange={handleSubjectFilterChange}>
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filtreeri õppeaine järgi" />
+                    <SelectValue placeholder="Filter by subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Kõik õppeained</SelectItem>
+                    <SelectItem value="all">All subjects</SelectItem>
                     {subjects.map((subject) => (
                       <SelectItem key={subject.id} value={subject.id}>
                         {subject.name_et || subject.name}
@@ -281,64 +319,97 @@ export default function Topics() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-center py-8 text-slate-500">Laadimine...</p>
+              <p className="text-center py-8 text-slate-500">Loading topics...</p>
             ) : filteredTopics.length === 0 ? (
-              <p className="text-center py-8 text-slate-500">Teemasid pole veel. Lisa esimene teema!</p>
+              <p className="text-center py-8 text-slate-500">No topics yet. Create the first topic!</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nimi</TableHead>
-                    <TableHead>Õppeaine</TableHead>
-                    <TableHead>Järjekord</TableHead>
-                    <TableHead>Olek</TableHead>
-                    <TableHead className="text-right">Tegevused</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTopics.map((topic) => (
-                    <TableRow key={topic.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{topic.name_et || topic.name}</p>
-                          {topic.name_et && topic.name !== topic.name_et && (
-                            <p className="text-sm text-slate-500">{topic.name}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {getSubjectName(topic.subject_id)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{topic.order_index || 0}</TableCell>
-                      <TableCell>
-                        <Badge variant={topic.status === 'published' ? 'default' : 'secondary'}>
-                          {topic.status === 'published' ? 'Avaldatud' : 'Mustand'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(topic)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(topic.id)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Display Order</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedTopics.map((topic) => {
+                      const topicTitle = topic.name_et || topic.name || "Untitled topic";
+                      return (
+                        <TableRow key={topic.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-slate-900">{topicTitle}</p>
+                              {topic.name_et && topic.name && topic.name !== topic.name_et && (
+                                <p className="text-sm text-slate-500">{topic.name}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {getSubjectName(topic.subject_id)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{topic.order_index ?? 0}</TableCell>
+                          <TableCell>
+                            <Badge variant={topic.status === "published" ? "default" : "secondary"}>
+                              {topic.status === "published" ? "Published" : "Draft"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(topic)}
+                                aria-label={`Edit topic ${topicTitle}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(topic.id)}
+                                aria-label={`Delete topic ${topicTitle}`}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-slate-500">
+                    Showing {startItem}-{endItem} of {filteredTopics.length} topics
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages || filteredTopics.length === 0}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

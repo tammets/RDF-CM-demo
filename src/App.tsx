@@ -9,7 +9,6 @@ import Outcomes from "@/pages/Outcomes";
 import Browse from "@/pages/Browse";
 import Search from "@/pages/Search";
 import Relations from "@/pages/Relations";
-import Import from "@/pages/Import";
 import Export from "@/pages/Export";
 
 type AppProps = {
@@ -66,7 +65,6 @@ export default function App({ datasetReady }: AppProps) {
         <Route path="browse" element={<Browse />} />
         <Route path="search" element={<Search />} />
         <Route path="relations" element={<Relations />} />
-        <Route path="import" element={<Import />} />
         <Route path="export" element={<Export />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

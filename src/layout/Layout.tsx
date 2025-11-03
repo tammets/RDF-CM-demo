@@ -5,7 +5,6 @@ import {
   FolderTree,
   BookMarked,
   Target,
-  Upload,
   Download,
   Search,
   LogOut,
@@ -24,10 +23,7 @@ const navigationItems = [
   { title: "Relations", url: "/relations", icon: Network },
 ];
 
-const dataManagement = [
-  { title: "Import Data", url: "/import", icon: Upload },
-  { title: "Export & API", url: "/export", icon: Download },
-];
+const dataManagement = [{ title: "Export & API", url: "/export", icon: Download }];
 
 export default function Layout() {
   const location = useLocation();
