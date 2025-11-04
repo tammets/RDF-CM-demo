@@ -4,8 +4,7 @@ import { curriculum, type LearningOutcome, type Topic, type Subject } from "@/ap
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Network, Target, ArrowRight, Info } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Network, Target, ArrowRight, Info, ChevronDown } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 type RelationSummary = {
@@ -185,6 +184,11 @@ export default function Relations() {
   };
 
   const handleOutcomeSelect = (value: string) => {
+    if (!value) {
+      setSelectedOutcome(null);
+      setSearchParams({});
+      return;
+    }
     const outcome = outcomes.find((item) => item.id === value);
     if (outcome) {
       handleOutcomeClick(outcome);
@@ -208,53 +212,96 @@ export default function Relations() {
                 <Target className="w-5 h-5 text-purple-600" />
                 Choose a learning outcome
               </CardTitle>
-              <div className="mt-4 space-y-3">
-                <Select value={filterSubject} onValueChange={handleSubjectChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All subjects</SelectItem>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filterTopic}
-                  onValueChange={handleTopicChange}
-                  disabled={filteredTopics.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by topic" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All topics</SelectItem>
-                    {filteredTopics.map((topic) => (
-                      <SelectItem key={topic.id} value={topic.id}>
-                        {topic.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={selectedOutcome?.id}
-                  onValueChange={handleOutcomeSelect}
-                  disabled={filteredOutcomes.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a learning outcome" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredOutcomes.map((outcome) => (
-                      <SelectItem key={outcome.id} value={outcome.id}>
-                        {outcome.text_et || outcome.text || "Unnamed outcome"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label
+                    htmlFor="relations-subject"
+                    className="block text-xs font-medium text-slate-600"
+                  >
+                    Subject
+                  </label>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="relations-subject"
+                      value={filterSubject}
+                      onChange={(event) => handleSubjectChange(event.target.value)}
+                      className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      <option value="all">All subjects</option>
+                      {subjects.map((subject) => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="relations-topic"
+                    className="block text-xs font-medium text-slate-600"
+                  >
+                    Topic
+                  </label>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="relations-topic"
+                      value={filterTopic}
+                      onChange={(event) => handleTopicChange(event.target.value)}
+                      disabled={filteredTopics.length === 0}
+                      className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      <option value="all">All topics</option>
+                      {filteredTopics.map((topic) => (
+                        <option key={topic.id} value={topic.id}>
+                          {topic.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="relations-outcome"
+                    className="block text-xs font-medium text-slate-600"
+                  >
+                    Learning outcome
+                  </label>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="relations-outcome"
+                      value={selectedOutcome?.id ?? ""}
+                      onChange={(event) => handleOutcomeSelect(event.target.value)}
+                      disabled={filteredOutcomes.length === 0}
+                      className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      <option value="">
+                        {filteredOutcomes.length === 0
+                          ? "No outcomes available"
+                          : "Select a learning outcome"}
+                      </option>
+                      {filteredOutcomes.map((outcome) => (
+                        <option key={outcome.id} value={outcome.id}>
+                          {outcome.text_et || outcome.text || "Unnamed outcome"}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500"
+                    />
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="max-h-[600px] overflow-y-auto">

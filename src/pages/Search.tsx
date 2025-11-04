@@ -9,8 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search as SearchIcon, BookOpen, BookMarked, Target } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search as SearchIcon, BookOpen, BookMarked, Target, ChevronDown } from "lucide-react";
 
 type SearchFilterType = "all" | "subjects" | "topics" | "outcomes";
 type SearchFilterLevel = "all" | "I" | "II" | "III" | "Gymnasium" | "University";
@@ -43,6 +42,11 @@ type OutcomeResult = BaseResult & {
 };
 
 type SearchResult = SubjectResult | TopicResult | OutcomeResult;
+
+const nativeSelectClass =
+  "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+const chevronClass =
+  "pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500";
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -198,36 +202,34 @@ export default function Search() {
                 />
               </div>
               <div className="flex gap-3">
-                <Select
-                  value={filterType}
-                  onValueChange={(value) => setFilterType(value as SearchFilterType)}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Content type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="subjects">Subjects</SelectItem>
-                    <SelectItem value="topics">Topics</SelectItem>
-                    <SelectItem value="outcomes">Learning Outcomes</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filterLevel}
-                  onValueChange={(value) => setFilterLevel(value as SearchFilterLevel)}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="School level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="I">Level I (1-3)</SelectItem>
-                    <SelectItem value="II">Level II (4-6)</SelectItem>
-                    <SelectItem value="III">Level III (7-9)</SelectItem>
-                    <SelectItem value="Gymnasium">Gymnasium (10-12)</SelectItem>
-                    <SelectItem value="University">University</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-1 w-48">
+                  <select
+                    value={filterType}
+                    onChange={(event) => setFilterType(event.target.value as SearchFilterType)}
+                    className={nativeSelectClass}
+                  >
+                    <option value="all">All Types</option>
+                    <option value="subjects">Subjects</option>
+                    <option value="topics">Topics</option>
+                    <option value="outcomes">Learning Outcomes</option>
+                  </select>
+                  <ChevronDown aria-hidden="true" className={chevronClass} />
+                </div>
+                <div className="grid grid-cols-1 w-48">
+                  <select
+                    value={filterLevel}
+                    onChange={(event) => setFilterLevel(event.target.value as SearchFilterLevel)}
+                    className={nativeSelectClass}
+                  >
+                    <option value="all">All Levels</option>
+                    <option value="I">Level I (1-3)</option>
+                    <option value="II">Level II (4-6)</option>
+                    <option value="III">Level III (7-9)</option>
+                    <option value="Gymnasium">Gymnasium (10-12)</option>
+                    <option value="University">University</option>
+                  </select>
+                  <ChevronDown aria-hidden="true" className={chevronClass} />
+                </div>
               </div>
             </div>
           </CardContent>

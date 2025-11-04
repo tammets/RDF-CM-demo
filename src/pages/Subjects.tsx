@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash2, BookOpen, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type SubjectFormData = {
@@ -21,6 +20,11 @@ type SubjectFormData = {
   uri: string;
   status: "draft" | "published";
 };
+
+const nativeSelectClass =
+  "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+const chevronClass =
+  "pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500";
 
 export default function Subjects() {
   const [open, setOpen] = useState(false);
@@ -173,20 +177,23 @@ export default function Subjects() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Olek</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, status: value as SubjectFormData["status"] })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Mustand</SelectItem>
-                        <SelectItem value="published">Avaldatud</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            status: event.target.value as SubjectFormData["status"],
+                          })
+                        }
+                        className={nativeSelectClass}
+                      >
+                        <option value="draft">Mustand</option>
+                        <option value="published">Avaldatud</option>
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">

@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, BookMarked, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, BookMarked, Filter, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type TopicFormData = {
@@ -24,6 +23,11 @@ type TopicFormData = {
 };
 
 const PAGE_SIZE = 20;
+
+const nativeSelectClass =
+  "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+const chevronClass =
+  "pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500";
 
 export default function Topics() {
   const [open, setOpen] = useState(false);
@@ -188,22 +192,25 @@ export default function Topics() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="subject_id">Subject *</Label>
-                  <Select 
-                    value={formData.subject_id} 
-                    onValueChange={(value) => setFormData({ ...formData, subject_id: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="subject_id"
+                      value={formData.subject_id}
+                      onChange={(event) =>
+                        setFormData({ ...formData, subject_id: event.target.value })
+                      }
+                      required
+                      className={nativeSelectClass}
+                    >
+                      <option value="">Select subject</option>
                       {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id}>
+                        <option key={subject.id} value={subject.id}>
                           {subject.name_et || subject.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown aria-hidden="true" className={chevronClass} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -254,20 +261,23 @@ export default function Topics() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, status: value as TopicFormData["status"] })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            status: event.target.value as TopicFormData["status"],
+                          })
+                        }
+                        className={nativeSelectClass}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -301,19 +311,21 @@ export default function Topics() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-slate-500" />
-                <Select value={filterSubject} onValueChange={handleSubjectFilterChange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All subjects</SelectItem>
+                <div className="grid grid-cols-1 w-48">
+                  <select
+                    value={filterSubject}
+                    onChange={(event) => handleSubjectFilterChange(event.target.value)}
+                    className={nativeSelectClass}
+                  >
+                    <option value="all">All subjects</option>
                     {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id}>
+                      <option key={subject.id} value={subject.id}>
                         {subject.name_et || subject.name}
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                  <ChevronDown aria-hidden="true" className={chevronClass} />
+                </div>
               </div>
             </div>
           </CardHeader>

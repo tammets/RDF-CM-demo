@@ -11,10 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Target, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Target, Filter, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type OutcomeFormData = {
@@ -27,6 +26,11 @@ type OutcomeFormData = {
 };
 
 const PAGE_SIZE = 20;
+
+const nativeSelectClass =
+  "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-9 pl-3 text-sm text-slate-900 outline outline-1 -outline-offset-1 outline-slate-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+const chevronClass =
+  "pointer-events-none col-start-1 row-start-1 mr-3 size-4 self-center justify-self-end text-slate-500";
 
 export default function Outcomes() {
   const [open, setOpen] = useState(false);
@@ -174,6 +178,8 @@ export default function Outcomes() {
     }
   };
 
+  const classOptions = useMemo(() => getClassOptions(formData.school_level), [formData.school_level]);
+
   const filteredOutcomes = useMemo(
     () =>
       outcomes.filter((outcome) => {
@@ -244,25 +250,29 @@ export default function Outcomes() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="topic_id">Topic *</Label>
-                  <Select 
-                    value={formData.topic_id} 
-                    onValueChange={(value) => setFormData({ ...formData, topic_id: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select topic" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="topic_id"
+                      value={formData.topic_id}
+                      onChange={(event) =>
+                        setFormData({ ...formData, topic_id: event.target.value })
+                      }
+                      required
+                      className={nativeSelectClass}
+                    >
+                      <option value="">Select topic</option>
                       {topics.map((topic) => {
                         const subject = getSubjectForTopic(topic.id);
+                        const label = subject ? `${subject.name} -> ${topic.name}` : topic.name;
                         return (
-                          <SelectItem key={topic.id} value={topic.id}>
-                            {subject ? `${subject.name} -> ${topic.name}` : topic.name}
-                          </SelectItem>
+                          <option key={topic.id} value={topic.id}>
+                            {label}
+                          </option>
                         );
                       })}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown aria-hidden="true" className={chevronClass} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="text_et">Learning outcome text *</Label>
@@ -278,41 +288,46 @@ export default function Outcomes() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="school_level">School level *</Label>
-                    <Select 
-                      value={formData.school_level} 
-                      onValueChange={(value) => {
-                        setFormData({ ...formData, school_level: value, class: "" });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="I">Stage I (grades 1-3)</SelectItem>
-                        <SelectItem value="II">Stage II (grades 4-6)</SelectItem>
-                        <SelectItem value="III">Stage III (grades 7-9)</SelectItem>
-                        <SelectItem value="Gymnasium">Upper secondary (grades 10-12)</SelectItem>
-                        <SelectItem value="University">University</SelectItem>
-                        <SelectItem value="All">All levels</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="school_level"
+                        value={formData.school_level}
+                        onChange={(event) => {
+                          setFormData({ ...formData, school_level: event.target.value, class: "" });
+                        }}
+                        className={nativeSelectClass}
+                      >
+                        <option value="I">Stage I (grades 1-3)</option>
+                        <option value="II">Stage II (grades 4-6)</option>
+                        <option value="III">Stage III (grades 7-9)</option>
+                        <option value="Gymnasium">Upper secondary (grades 10-12)</option>
+                        <option value="University">University</option>
+                        <option value="All">All levels</option>
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="class">Grade</Label>
-                    <Select 
-                      value={formData.class}
-                      onValueChange={(value) => setFormData({ ...formData, class: value })}
-                      disabled={formData.school_level === "All"}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select grade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getClassOptions(formData.school_level).map((cls) => (
-                          <SelectItem key={cls} value={cls}>Grade {cls}</SelectItem>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="class"
+                        value={formData.class}
+                        onChange={(event) => setFormData({ ...formData, class: event.target.value })}
+                        disabled={formData.school_level === "All" || classOptions.length === 0}
+                        className={nativeSelectClass}
+                      >
+                        <option value="">
+                          {formData.school_level === "All" ? "All grades" : "Select grade"}
+                        </option>
+                        {classOptions.map((cls) => (
+                          <option key={cls} value={cls}>
+                            Grade {cls}
+                          </option>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -333,20 +348,23 @@ export default function Outcomes() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, status: value as OutcomeFormData["status"] })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            status: event.target.value as OutcomeFormData["status"],
+                          })
+                        }
+                        className={nativeSelectClass}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
                   </div>
                 </div>
                 {editingOutcome && (
@@ -383,33 +401,37 @@ export default function Outcomes() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-slate-500" />
-                  <Select value={filterTopic} onValueChange={handleTopicFilterChange}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Filter by topic" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All topics</SelectItem>
+                  <div className="grid grid-cols-1 w-48">
+                    <select
+                      value={filterTopic}
+                      onChange={(event) => handleTopicFilterChange(event.target.value)}
+                      className={nativeSelectClass}
+                    >
+                      <option value="all">All topics</option>
                       {topics.map((topic) => (
-                        <SelectItem key={topic.id} value={topic.id}>
+                        <option key={topic.id} value={topic.id}>
                           {topic.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown aria-hidden="true" className={chevronClass} />
+                  </div>
                 </div>
-                <Select value={filterLevel} onValueChange={handleLevelFilterChange}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="School level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All levels</SelectItem>
-                    <SelectItem value="I">Stage I</SelectItem>
-                    <SelectItem value="II">Stage II</SelectItem>
-                    <SelectItem value="III">Stage III</SelectItem>
-                    <SelectItem value="Gymnasium">Upper secondary</SelectItem>
-                    <SelectItem value="University">University</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-1 w-40">
+                  <select
+                    value={filterLevel}
+                    onChange={(event) => handleLevelFilterChange(event.target.value)}
+                    className={nativeSelectClass}
+                  >
+                    <option value="all">All levels</option>
+                    <option value="I">Stage I</option>
+                    <option value="II">Stage II</option>
+                    <option value="III">Stage III</option>
+                    <option value="Gymnasium">Upper secondary</option>
+                    <option value="University">University</option>
+                  </select>
+                  <ChevronDown aria-hidden="true" className={chevronClass} />
+                </div>
               </div>
             </div>
           </CardHeader>
