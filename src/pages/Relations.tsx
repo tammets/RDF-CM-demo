@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from "react";
-import { curriculum, type LearningOutcome, type Topic } from "@/api/curriculumClient";
+import { curriculum, type LearningOutcome, type Topic, type Subject } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,13 @@ type RelationSummary = {
 export default function Relations() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedOutcome, setSelectedOutcome] = useState<LearningOutcome | null>(null);
+  const [filterSubject, setFilterSubject] = useState<string>("all");
   const [filterTopic, setFilterTopic] = useState<string>("all");
+
+  const { data: subjects = [] } = useQuery<Subject[]>({
+    queryKey: ["subjects"],
+    queryFn: () => curriculum.entities.Subject.list(),
+  });
 
   const { data: topics = [] } = useQuery<Topic[]>({
     queryKey: ["topics"],
@@ -39,40 +45,80 @@ export default function Relations() {
     if (!outcome) {
       return;
     }
+    const outcomeTopic = topics.find((item) => item.id === outcome.topic_id);
+    if (outcomeTopic) {
+      if (filterSubject !== outcomeTopic.subject_id) {
+        setFilterSubject(outcomeTopic.subject_id);
+      }
+      if (filterTopic !== outcome.topic_id) {
+        setFilterTopic(outcome.topic_id);
+      }
+    }
     if (selectedOutcome?.id !== outcome.id) {
       setSelectedOutcome(outcome);
     }
-    if (filterTopic !== "all" && filterTopic !== outcome.topic_id) {
-      setFilterTopic("all");
-    }
-  }, [searchParams, outcomes, selectedOutcome?.id, filterTopic]);
+  }, [searchParams, outcomes, topics, selectedOutcome?.id, filterSubject, filterTopic]);
 
   const getTopicName = (topicId: string) => {
     const topic = topics.find((item) => item.id === topicId);
-    return topic ? topic.name : "Unknown";
+    return topic ? topic.name : "Unknown topic";
+  };
+
+  const getSubjectName = (subjectId: string) => {
+    const subject = subjects.find((item) => item.id === subjectId);
+    return subject ? subject.name : "Unknown subject";
+  };
+
+  const getSubjectNameForOutcome = (outcome: LearningOutcome | null) => {
+    if (!outcome) {
+      return "Unknown subject";
+    }
+    const topic = topics.find((item) => item.id === outcome.topic_id);
+    if (!topic) {
+      return "Unknown subject";
+    }
+    return getSubjectName(topic.subject_id);
   };
 
   const getOutcomeById = (id: string) => {
     return outcomes.find((outcome) => outcome.id === id) ?? null;
   };
 
-  const filteredOutcomes =
-    filterTopic === "all"
-      ? outcomes
-      : outcomes.filter((outcome) => outcome.topic_id === filterTopic);
+  const sortByOrder = <T extends { order_index?: number }>(items: T[]) =>
+    [...items].sort((a, b) => {
+      const orderA = a.order_index ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.order_index ?? Number.MAX_SAFE_INTEGER;
+      if (orderA === orderB) {
+        return 0;
+      }
+      return orderA - orderB;
+    });
 
-  const outcomesWithRelations = useMemo(() => {
-    return filteredOutcomes.filter(
-      (outcome) =>
-        (outcome.expects && outcome.expects.length > 0) ||
-        (outcome.consists_of && outcome.consists_of.length > 0) ||
-        outcomes.some(
-          (other) =>
-            (other.expects && other.expects.includes(outcome.id)) ||
-            (other.consists_of && other.consists_of.includes(outcome.id)),
-        ),
+  const filteredTopics = useMemo(() => {
+    const relevantTopics =
+      filterSubject === "all"
+        ? topics
+        : topics.filter((topic) => topic.subject_id === filterSubject);
+    return sortByOrder(relevantTopics);
+  }, [topics, filterSubject]);
+
+  const filteredOutcomes = useMemo(() => {
+    return sortByOrder(
+      outcomes.filter((outcome) => {
+        const outcomeTopic = topics.find((topic) => topic.id === outcome.topic_id);
+        if (!outcomeTopic) {
+          return filterSubject === "all";
+        }
+        if (filterSubject !== "all" && outcomeTopic.subject_id !== filterSubject) {
+          return false;
+        }
+        if (filterTopic !== "all" && outcome.topic_id !== filterTopic) {
+          return false;
+        }
+        return true;
+      }),
     );
-  }, [filteredOutcomes, outcomes]);
+  }, [outcomes, topics, filterSubject, filterTopic]);
 
   const getRelatedOutcomes = (outcome: LearningOutcome | null): RelationSummary => {
     if (!outcome) {
@@ -104,9 +150,45 @@ export default function Relations() {
     expected_by: [],
     part_of: [],
   };
+  const handleSubjectChange = (value: string) => {
+    setFilterSubject(value);
+    setFilterTopic("all");
+    if (selectedOutcome) {
+      const outcomeTopic = topics.find((item) => item.id === selectedOutcome.topic_id);
+      if (!outcomeTopic || (value !== "all" && outcomeTopic.subject_id !== value)) {
+        setSelectedOutcome(null);
+        setSearchParams({});
+      }
+    }
+  };
+
+  const handleTopicChange = (value: string) => {
+    setFilterTopic(value);
+    if (selectedOutcome && value !== "all" && selectedOutcome.topic_id !== value) {
+      setSelectedOutcome(null);
+      setSearchParams({});
+    }
+  };
+
   const handleOutcomeClick = (outcome: LearningOutcome) => {
+    const outcomeTopic = topics.find((item) => item.id === outcome.topic_id);
+    if (outcomeTopic) {
+      if (filterSubject !== outcomeTopic.subject_id) {
+        setFilterSubject(outcomeTopic.subject_id);
+      }
+      if (filterTopic !== outcome.topic_id) {
+        setFilterTopic(outcome.topic_id);
+      }
+    }
     setSelectedOutcome(outcome);
     setSearchParams({ outcome: outcome.id });
+  };
+
+  const handleOutcomeSelect = (value: string) => {
+    const outcome = outcomes.find((item) => item.id === value);
+    if (outcome) {
+      handleOutcomeClick(outcome);
+    }
   };
 
   return (
@@ -126,19 +208,49 @@ export default function Relations() {
                 <Target className="w-5 h-5 text-purple-600" />
                 Choose a learning outcome
               </CardTitle>
-              <div className="mt-3">
+              <div className="mt-4 space-y-3">
+                <Select value={filterSubject} onValueChange={handleSubjectChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All subjects</SelectItem>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select
                   value={filterTopic}
-                  onValueChange={(value) => setFilterTopic(value)}
+                  onValueChange={handleTopicChange}
+                  disabled={filteredTopics.length === 0}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by topic" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All topics</SelectItem>
-                    {topics.map((topic) => (
+                    {filteredTopics.map((topic) => (
                       <SelectItem key={topic.id} value={topic.id}>
                         {topic.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedOutcome?.id}
+                  onValueChange={handleOutcomeSelect}
+                  disabled={filteredOutcomes.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a learning outcome" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredOutcomes.map((outcome) => (
+                      <SelectItem key={outcome.id} value={outcome.id}>
+                        {outcome.text_et || outcome.text || "Unnamed outcome"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -147,8 +259,8 @@ export default function Relations() {
             </CardHeader>
             <CardContent className="max-h-[600px] overflow-y-auto">
               <div className="space-y-2">
-                {outcomesWithRelations.length > 0 ? (
-                  outcomesWithRelations.map((outcome) => {
+                {filteredOutcomes.length > 0 ? (
+                  filteredOutcomes.map((outcome) => {
                     const hasExpects = outcome.expects && outcome.expects.length > 0;
                     const hasConsistsOf = outcome.consists_of && outcome.consists_of.length > 0;
                     const isExpectedBy = outcomes.some(o => o.expects && o.expects.includes(outcome.id));
@@ -188,7 +300,7 @@ export default function Relations() {
                 ) : (
                   <div className="text-center py-8 text-slate-500">
                     <Info className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                    <p className="text-sm">No learning outcomes with relations were found</p>
+                    <p className="text-sm">No learning outcomes match the current filters</p>
                   </div>
                 )}
               </div>
@@ -211,6 +323,9 @@ export default function Relations() {
                         {selectedOutcome.text_et || selectedOutcome.text}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="bg-slate-100 text-slate-700">
+                          {getSubjectNameForOutcome(selectedOutcome)}
+                        </Badge>
                         <Badge className="bg-purple-600">{selectedOutcome.school_level}</Badge>
                         <Badge variant="outline">{getTopicName(selectedOutcome.topic_id)}</Badge>
                         {selectedOutcome.grade_range && (
