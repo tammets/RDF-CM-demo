@@ -60,7 +60,7 @@ function RelationColumn({
                   ) : null}
                   <ArrowRight className="h-3 w-3 text-slate-400" />
                   <span className="text-[11px] uppercase tracking-wide text-slate-500">
-                    Vaata
+                    View
                   </span>
                 </div>
               </div>
@@ -85,46 +85,46 @@ export default function RelationGraph({
   return (
     <div className="space-y-4 rounded-2xl border border-purple-200 bg-purple-50/40 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-purple-900">Seoste ülevaade</h2>
+        <h2 className="text-lg font-semibold text-purple-900">Relation Overview</h2>
         <p className="text-sm text-purple-700/80">
-          Valitud õpiväljund: {outcome.text_et || outcome.text || "—"}
+          Selected learning outcome: {outcome.text_et || outcome.text || "—"}
         </p>
         <p className="text-xs text-purple-600/80">
-          Seotud teema: {getTopicName(outcome.topic_id)}
+          Linked topic: {getTopicName(outcome.topic_id)}
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <RelationColumn
-          title="Eeldab"
-          description="Õpiväljundid, mis tuleb saavutada enne seda"
+          title="Requires"
+          description="Learning outcomes that should be completed beforehand"
           items={relations.expects}
           badgeColor="bg-blue-600 text-white"
-          emptyState="Eeldavaid õpiväljundeid pole lisatud"
+          emptyState="No prerequisite learning outcomes yet"
           onClick={onOutcomeClick}
         />
         <RelationColumn
-          title="Koosneb"
-          description="Alam-õpiväljundid, millest see koosneb"
+          title="Consists of"
+          description="Component outcomes that make up the selected outcome"
           items={relations.consists_of}
           badgeColor="bg-emerald-600 text-white"
-          emptyState="Koosnevaid õpiväljundeid pole lisatud"
+          emptyState="No component learning outcomes yet"
           onClick={onOutcomeClick}
         />
         <RelationColumn
-          title="Eeldab seda"
-          description="Õpiväljundid, mille eelduseks see on"
+          title="Required by"
+          description="Outcomes that rely on the selected outcome as a prerequisite"
           items={relations.expected_by}
           badgeColor="bg-amber-500 text-slate-900"
-          emptyState="Teised õpiväljundid ei eelda seda"
+          emptyState="No outcomes require this yet"
           onClick={onOutcomeClick}
         />
         <RelationColumn
-          title="On osa"
-          description="Õpiväljundid, mille sisse see kuulub"
+          title="Part of"
+          description="Broader outcomes that include the selected outcome"
           items={relations.part_of}
           badgeColor="bg-purple-600 text-white"
-          emptyState="Õpiväljund ei kuulu teistesse loenditesse"
+          emptyState="No broader outcomes include this yet"
           onClick={onOutcomeClick}
         />
       </div>

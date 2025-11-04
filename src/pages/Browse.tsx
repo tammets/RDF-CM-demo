@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { ChevronRight, ChevronDown, BookOpen, BookMarked, Target, ExternalLink }
 type ExpandedState = Record<string, boolean>;
 
 export default function Browse() {
+  const navigate = useNavigate();
   const [expandedSubjects, setExpandedSubjects] = useState<ExpandedState>({});
   const [expandedTopics, setExpandedTopics] = useState<ExpandedState>({});
 
@@ -50,6 +52,10 @@ export default function Browse() {
     return outcomes
       .filter((outcome) => outcome.topic_id === topicId)
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  };
+
+  const openRelationsForOutcome = (outcomeId: string) => {
+    navigate(`/relations?outcome=${outcomeId}`);
   };
 
   return (
@@ -159,7 +165,19 @@ export default function Browse() {
                                   {topicOutcomes.length > 0 ? (
                                     <div className="space-y-2">
                                       {topicOutcomes.map((outcome) => (
-                                        <div key={outcome.id} className="p-3 bg-white border border-purple-200 rounded-lg">
+                                        <div
+                                          key={outcome.id}
+                                          role="button"
+                                          tabIndex={0}
+                                          className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer transition-all hover:border-purple-400 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+                                          onClick={() => openRelationsForOutcome(outcome.id)}
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                              event.preventDefault();
+                                              openRelationsForOutcome(outcome.id);
+                                            }
+                                          }}
+                                        >
                                           <div className="flex items-start gap-3">
                                             <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
                                               <Target className="w-3 h-3 text-white" />

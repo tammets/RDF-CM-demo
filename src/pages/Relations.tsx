@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { curriculum, type LearningOutcome, type Topic } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Network, Target, ArrowRight, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RelationGraph from "@/components/relations/RelationGraph";
+import { useSearchParams } from "react-router-dom";
 
 type RelationSummary = {
   expects: LearningOutcome[];
@@ -16,6 +17,7 @@ type RelationSummary = {
 };
 
 export default function Relations() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedOutcome, setSelectedOutcome] = useState<LearningOutcome | null>(null);
   const [filterTopic, setFilterTopic] = useState<string>("all");
 
@@ -29,9 +31,26 @@ export default function Relations() {
     queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
+  useEffect(() => {
+    const outcomeId = searchParams.get("outcome");
+    if (!outcomeId) {
+      return;
+    }
+    const outcome = outcomes.find((item) => item.id === outcomeId);
+    if (!outcome) {
+      return;
+    }
+    if (selectedOutcome?.id !== outcome.id) {
+      setSelectedOutcome(outcome);
+    }
+    if (filterTopic !== "all" && filterTopic !== outcome.topic_id) {
+      setFilterTopic("all");
+    }
+  }, [searchParams, outcomes, selectedOutcome?.id, filterTopic]);
+
   const getTopicName = (topicId: string) => {
     const topic = topics.find((item) => item.id === topicId);
-    return topic ? topic.name : "Teadmata";
+    return topic ? topic.name : "Unknown";
   };
 
   const getOutcomeById = (id: string) => {
@@ -94,14 +113,17 @@ export default function Relations() {
 
   const handleOutcomeClick = (outcome: LearningOutcome) => {
     setSelectedOutcome(outcome);
+    setSearchParams({ outcome: outcome.id });
   };
 
   return (
     <div className="p-8 bg-gradient-to-br from-slate-50 to-purple-50/30 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Õpiväljundite seosed</h1>
-          <p className="text-slate-600">Visualiseeri õpiväljundite vahelisi seoseid (eeldab / koosneb)</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">Learning Outcome Relations</h1>
+          <p className="text-slate-600">
+            Visualise the relationships between learning outcomes (requires / consists of)
+          </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -109,7 +131,7 @@ export default function Relations() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="w-5 h-5 text-purple-600" />
-                Vali õpiväljund
+                Choose a learning outcome
               </CardTitle>
               <div className="mt-3">
                 <Select
@@ -117,10 +139,10 @@ export default function Relations() {
                   onValueChange={(value) => setFilterTopic(value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Filtreeri teema järgi" />
+                    <SelectValue placeholder="Filter by topic" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Kõik teemad</SelectItem>
+                    <SelectItem value="all">All topics</SelectItem>
                     {topics.map((topic) => (
                       <SelectItem key={topic.id} value={topic.id}>
                         {topic.name}
@@ -158,12 +180,12 @@ export default function Relations() {
                           </Badge>
                           {(hasExpects || isExpectedBy) && (
                             <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              Eeldab
+                              Requires
                             </Badge>
                           )}
                           {(hasConsistsOf || isPartOf) && (
                             <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                              Koosneb
+                              Includes parts
                             </Badge>
                           )}
                         </div>
@@ -173,7 +195,7 @@ export default function Relations() {
                 ) : (
                   <div className="text-center py-8 text-slate-500">
                     <Info className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                    <p className="text-sm">Seostega õpiväljundeid ei leitud</p>
+                    <p className="text-sm">No learning outcomes with relations were found</p>
                   </div>
                 )}
               </div>
@@ -187,10 +209,10 @@ export default function Relations() {
                   <CardHeader className="bg-purple-50">
                     <CardTitle className="flex items-center gap-2">
                       <Target className="w-5 h-5 text-purple-600" />
-                      Valitud õpiväljund
+                      Selected learning outcome
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-6 min-h-[150px]">
                     <div className="space-y-3">
                       <p className="text-lg font-medium text-slate-900">
                         {selectedOutcome.text_et || selectedOutcome.text}
@@ -199,8 +221,48 @@ export default function Relations() {
                         <Badge className="bg-purple-600">{selectedOutcome.school_level}</Badge>
                         <Badge variant="outline">{getTopicName(selectedOutcome.topic_id)}</Badge>
                         {selectedOutcome.grade_range && (
-                          <Badge variant="secondary">{selectedOutcome.grade_range} klass</Badge>
+                          <Badge variant="secondary">Grade {selectedOutcome.grade_range}</Badge>
                         )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Info className="w-5 h-5 text-purple-600" />
+                      How the relation overview works
+                    </CardTitle>
+                    <p className="text-sm text-slate-600">
+                      Each relation type helps you understand how this learning outcome connects to others in the curriculum graph.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/30 p-3">
+                        <h4 className="text-sm font-semibold text-blue-900">Requires</h4>
+                        <p className="text-xs text-blue-800">
+                          Prerequisite outcomes that need to be achieved first. These populate the "Requires" and "Required by" sections.
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-dashed border-green-200 bg-green-50/40 p-3">
+                        <h4 className="text-sm font-semibold text-emerald-900">Consists of</h4>
+                        <p className="text-xs text-emerald-800">
+                          Component outcomes that build up the selected outcome. They appear under "Consists of" and "Part of".
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/60 p-3">
+                        <h4 className="text-sm font-semibold text-amber-900">Required by</h4>
+                        <p className="text-xs text-amber-800">
+                          Outcomes that rely on the selected outcome as a prerequisite. Use this to see the learning paths that follow.
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-dashed border-purple-200 bg-purple-50/80 p-3">
+                        <h4 className="text-sm font-semibold text-purple-900">Part of</h4>
+                        <p className="text-xs text-purple-800">
+                          Broader outcomes that include the selected outcome as one of their components.
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -220,10 +282,10 @@ export default function Relations() {
                     <CardHeader className="bg-blue-50">
                       <CardTitle className="flex items-center gap-2 text-blue-900">
                         <ArrowRight className="w-5 h-5" />
-                        Eeldab (eeltingimused)
+                        Requires (prerequisites)
                       </CardTitle>
                       <p className="text-sm text-blue-700 mt-1">
-                        Need õpiväljundid peavad olema saavutatud enne valitud õpiväljundit
+                        These learning outcomes should be completed before the selected outcome.
                       </p>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -253,10 +315,10 @@ export default function Relations() {
                     <CardHeader className="bg-green-50">
                       <CardTitle className="flex items-center gap-2 text-green-900">
                         <Network className="w-5 h-5" />
-                        Koosneb (alaväljundid)
+                        Consists of (components)
                       </CardTitle>
                       <p className="text-sm text-green-700 mt-1">
-                        Valitud õpiväljund koosneb nendest väiksematest õpiväljunditest
+                        The selected outcome is built from these smaller learning outcomes.
                       </p>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -286,10 +348,10 @@ export default function Relations() {
                     <CardHeader className="bg-amber-50">
                       <CardTitle className="flex items-center gap-2 text-amber-900">
                         <ArrowRight className="w-5 h-5 rotate-180" />
-                        Seda eeldavad
+                        Required by
                       </CardTitle>
                       <p className="text-sm text-amber-700 mt-1">
-                        Need õpiväljundid eeldavad valitud õpiväljundi saavutamist
+                        These learning outcomes treat the selected one as a prerequisite.
                       </p>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -319,10 +381,10 @@ export default function Relations() {
                     <CardHeader className="bg-indigo-50">
                       <CardTitle className="flex items-center gap-2 text-indigo-900">
                         <Network className="w-5 h-5" />
-                        Osa järgmistest
+                        Part of
                       </CardTitle>
                       <p className="text-sm text-indigo-700 mt-1">
-                        Valitud õpiväljund on osa nendest suurematest õpiväljunditest
+                        The selected outcome is included inside these broader outcomes.
                       </p>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -355,7 +417,7 @@ export default function Relations() {
                     <CardContent className="py-12">
                       <div className="text-center text-slate-500">
                         <Info className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-                        <p>Sellel õpiväljundil pole seoseid teiste õpiväljunditega</p>
+                        <p>This learning outcome does not have connections to others yet.</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -366,8 +428,8 @@ export default function Relations() {
                 <CardContent className="py-20">
                   <div className="text-center text-slate-500">
                     <Network className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                    <h3 className="text-lg font-medium text-slate-700 mb-2">Vali õpiväljund</h3>
-                    <p className="text-sm">Vali vasakult õpiväljund, et näha selle seoseid teiste õpiväljunditega</p>
+                    <h3 className="text-lg font-medium text-slate-700 mb-2">Select a learning outcome</h3>
+                    <p className="text-sm">Choose an outcome from the list to explore its relations with other outcomes.</p>
                   </div>
                 </CardContent>
               </Card>
