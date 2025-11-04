@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Network, Target, ArrowRight, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import RelationGraph from "@/components/relations/RelationGraph";
 import { useSearchParams } from "react-router-dom";
 
 type RelationSummary = {
@@ -105,12 +104,6 @@ export default function Relations() {
     expected_by: [],
     part_of: [],
   };
-  const hasAnyRelations =
-    safeRelations.expects.length > 0 ||
-    safeRelations.consists_of.length > 0 ||
-    safeRelations.expected_by.length > 0 ||
-    safeRelations.part_of.length > 0;
-
   const handleOutcomeClick = (outcome: LearningOutcome) => {
     setSelectedOutcome(outcome);
     setSearchParams({ outcome: outcome.id });
@@ -127,8 +120,8 @@ export default function Relations() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
-            <CardHeader>
+          <Card className="lg:col-span-1 border-slate-200/70">
+            <CardHeader className="pb-4 border-b border-slate-100/80">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="w-5 h-5 text-purple-600" />
                 Choose a learning outcome
@@ -166,8 +159,8 @@ export default function Relations() {
                         key={outcome.id}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedOutcome?.id === outcome.id
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-slate-200 hover:border-purple-300 hover:bg-slate-50'
+                            ? 'border-purple-300 bg-purple-50/60'
+                            : 'border-slate-200/70 hover:border-purple-300 hover:bg-slate-50'
                         }`}
                         onClick={() => handleOutcomeClick(outcome)}
                       >
@@ -205,8 +198,8 @@ export default function Relations() {
           <div className="lg:col-span-2 space-y-6">
             {selectedOutcome ? (
               <>
-                <Card className="border-2 border-purple-500">
-                  <CardHeader className="bg-purple-50">
+                <Card className="border border-purple-200 bg-white/90">
+                  <CardHeader className="bg-purple-50/80 pb-4 border-b border-purple-100/80">
                     <CardTitle className="flex items-center gap-2">
                       <Target className="w-5 h-5 text-purple-600" />
                       Selected learning outcome
@@ -228,58 +221,9 @@ export default function Relations() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Info className="w-5 h-5 text-purple-600" />
-                      How the relation overview works
-                    </CardTitle>
-                    <p className="text-sm text-slate-600">
-                      Each relation type helps you understand how this learning outcome connects to others in the curriculum graph.
-                    </p>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/30 p-3">
-                        <h4 className="text-sm font-semibold text-blue-900">Requires</h4>
-                        <p className="text-xs text-blue-800">
-                          Prerequisite outcomes that need to be achieved first. These populate the "Requires" and "Required by" sections.
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-dashed border-green-200 bg-green-50/40 p-3">
-                        <h4 className="text-sm font-semibold text-emerald-900">Consists of</h4>
-                        <p className="text-xs text-emerald-800">
-                          Component outcomes that build up the selected outcome. They appear under "Consists of" and "Part of".
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/60 p-3">
-                        <h4 className="text-sm font-semibold text-amber-900">Required by</h4>
-                        <p className="text-xs text-amber-800">
-                          Outcomes that rely on the selected outcome as a prerequisite. Use this to see the learning paths that follow.
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-dashed border-purple-200 bg-purple-50/80 p-3">
-                        <h4 className="text-sm font-semibold text-purple-900">Part of</h4>
-                        <p className="text-xs text-purple-800">
-                          Broader outcomes that include the selected outcome as one of their components.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {hasAnyRelations && (
-                  <RelationGraph
-                    outcome={selectedOutcome}
-                    relations={safeRelations}
-                    onOutcomeClick={handleOutcomeClick}
-                    getTopicName={getTopicName}
-                  />
-                )}
-
                 {safeRelations.expects.length > 0 && (
-                  <Card>
-                    <CardHeader className="bg-blue-50">
+                  <Card className="border-blue-200/70">
+                    <CardHeader className="bg-blue-50/70 pb-4 border-b border-blue-200/70">
                       <CardTitle className="flex items-center gap-2 text-blue-900">
                         <ArrowRight className="w-5 h-5" />
                         Requires (prerequisites)
@@ -293,7 +237,7 @@ export default function Relations() {
                         {safeRelations.expects.map((outcome) => (
                           <div
                             key={outcome.id}
-                            className="p-4 border border-blue-200 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer"
+                            className="p-4 border border-blue-200/70 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer"
                             onClick={() => handleOutcomeClick(outcome)}
                           >
                             <p className="text-sm font-medium text-slate-900 mb-2">
@@ -311,8 +255,8 @@ export default function Relations() {
                 )}
 
                 {safeRelations.consists_of.length > 0 && (
-                  <Card>
-                    <CardHeader className="bg-green-50">
+                  <Card className="border-green-200/70">
+                    <CardHeader className="bg-green-50/70 pb-4 border-b border-green-200/70">
                       <CardTitle className="flex items-center gap-2 text-green-900">
                         <Network className="w-5 h-5" />
                         Consists of (components)
@@ -326,7 +270,7 @@ export default function Relations() {
                         {safeRelations.consists_of.map((outcome) => (
                           <div
                             key={outcome.id}
-                            className="p-4 border border-green-200 rounded-lg bg-green-50/50 hover:bg-green-50 transition-colors cursor-pointer"
+                            className="p-4 border border-green-200/70 rounded-lg bg-green-50/50 hover:bg-green-50 transition-colors cursor-pointer"
                             onClick={() => handleOutcomeClick(outcome)}
                           >
                             <p className="text-sm font-medium text-slate-900 mb-2">
@@ -344,8 +288,8 @@ export default function Relations() {
                 )}
 
                 {safeRelations.expected_by.length > 0 && (
-                  <Card>
-                    <CardHeader className="bg-amber-50">
+                  <Card className="border-amber-200/70">
+                    <CardHeader className="bg-amber-50/70 pb-4 border-b border-amber-200/70">
                       <CardTitle className="flex items-center gap-2 text-amber-900">
                         <ArrowRight className="w-5 h-5 rotate-180" />
                         Required by
@@ -359,7 +303,7 @@ export default function Relations() {
                         {safeRelations.expected_by.map((outcome) => (
                           <div
                             key={outcome.id}
-                            className="p-4 border border-amber-200 rounded-lg bg-amber-50/50 hover:bg-amber-50 transition-colors cursor-pointer"
+                            className="p-4 border border-amber-200/70 rounded-lg bg-amber-50/50 hover:bg-amber-50 transition-colors cursor-pointer"
                             onClick={() => handleOutcomeClick(outcome)}
                           >
                             <p className="text-sm font-medium text-slate-900 mb-2">
@@ -377,8 +321,8 @@ export default function Relations() {
                 )}
 
                 {safeRelations.part_of.length > 0 && (
-                  <Card>
-                    <CardHeader className="bg-indigo-50">
+                  <Card className="border-indigo-200/70">
+                    <CardHeader className="bg-indigo-50/70 pb-4 border-b border-indigo-200/70">
                       <CardTitle className="flex items-center gap-2 text-indigo-900">
                         <Network className="w-5 h-5" />
                         Part of
@@ -392,7 +336,7 @@ export default function Relations() {
                         {safeRelations.part_of.map((outcome) => (
                           <div
                             key={outcome.id}
-                            className="p-4 border border-indigo-200 rounded-lg bg-indigo-50/50 hover:bg-indigo-50 transition-colors cursor-pointer"
+                            className="p-4 border border-indigo-200/70 rounded-lg bg-indigo-50/50 hover:bg-indigo-50 transition-colors cursor-pointer"
                             onClick={() => handleOutcomeClick(outcome)}
                           >
                             <p className="text-sm font-medium text-slate-900 mb-2">
