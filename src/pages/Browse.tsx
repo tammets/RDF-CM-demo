@@ -72,7 +72,7 @@ export default function Browse() {
             const subjectTopics = getTopicsForSubject(subject.id);
             
             return (
-              <Card key={subject.id} className="border-slate-200 bg-white shadow-md overflow-hidden">
+              <Card key={subject.id} className="border-slate-200 bg-white overflow-hidden">
                 <div 
                   className="p-5 cursor-pointer hover:bg-slate-50 transition-colors"
                   onClick={() => toggleSubject(subject.id)}
@@ -85,9 +85,6 @@ export default function Browse() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-semibold text-slate-900">{subject.name}</h3>
-                          {subject.status === 'published' && (
-                            <Badge variant="default" className="bg-green-600">Published</Badge>
-                          )}
                           {subject.code && (
                             <Badge variant="outline">{subject.code}</Badge>
                           )}
@@ -100,9 +97,6 @@ export default function Browse() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="text-xs">
-                          {subjectTopics.length} topics
-                        </Badge>
                         {isExpanded ? (
                           <ChevronDown className="w-5 h-5 text-slate-400" />
                         ) : (
@@ -138,9 +132,6 @@ export default function Browse() {
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2">
                                         <h4 className="font-medium text-slate-900">{topic.name}</h4>
-                                        {topic.status === 'published' && (
-                                          <Badge variant="default" className="bg-green-600 text-xs">Published</Badge>
-                                        )}
                                       </div>
                                       {topic.name_et && (
                                         <p className="text-xs text-slate-500 mt-0.5">{topic.name_et}</p>
@@ -189,11 +180,6 @@ export default function Browse() {
                                                   <Badge variant="secondary" className="text-xs">
                                                     {outcome.school_level}
                                                   </Badge>
-                                                  {outcome.status === 'published' && (
-                                                    <Badge variant="default" className="bg-green-600 text-xs">
-                                                      Published
-                                                    </Badge>
-                                                  )}
                                                 </div>
                                               </div>
                                               {outcome.text_et && (

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { BookOpen, BookMarked, Target, CheckCircle, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { FileText, BookOpen, BookMarked, Target } from "lucide-react";
 
 import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,33 +22,29 @@ export default function Dashboard() {
     queryFn: () => curriculum.entities.LearningOutcome.list("-created_date"),
   });
 
-  const publishedSubjects = subjects.filter((subject) => subject.status === "published").length;
-  const publishedTopics = topics.filter((topic) => topic.status === "published").length;
-  const publishedOutcomes = outcomes.filter((outcome) => outcome.status === "published").length;
-
   const stats = [
     {
-      title: "Subjects",
-      value: subjects.length,
-      published: publishedSubjects,
+      id: "subjects",
+      name: "Subjects",
+      stat: subjects.length,
       icon: BookOpen,
-      color: "from-blue-500 to-blue-600",
+      iconBg: "bg-blue-500",
       link: createPageUrl("Subjects"),
     },
     {
-      title: "Topics",
-      value: topics.length,
-      published: publishedTopics,
+      id: "topics",
+      name: "Topics",
+      stat: topics.length,
       icon: BookMarked,
-      color: "from-indigo-500 to-indigo-600",
+      iconBg: "bg-indigo-500",
       link: createPageUrl("Topics"),
     },
     {
-      title: "Learning Outcomes",
-      value: outcomes.length,
-      published: publishedOutcomes,
+      id: "outcomes",
+      name: "Learning Outcomes",
+      stat: outcomes.length,
       icon: Target,
-      color: "from-purple-500 to-purple-600",
+      iconBg: "bg-purple-500",
       link: createPageUrl("Outcomes"),
     },
   ];
@@ -84,38 +80,36 @@ export default function Dashboard() {
           <p className="text-slate-600">Manage Estonian curriculum data with streamlined RDF exports</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {stats.map((stat) => (
-            <Link key={stat.title} to={stat.link}>
-              <Card className="group cursor-pointer border-slate-200 bg-white transition-all duration-300 hover:shadow-xl">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} shadow-lg transition-transform group-hover:scale-110`}
-                        >
-                          <stat.icon className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                          <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-slate-600">{stat.published} published</span>
-                      </div>
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">Current totals</h3>
+          <dl className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {stats.map((stat) => (
+              <Link key={stat.id} to={stat.link} className="group block">
+                <div className="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:pt-6">
+                  <dt>
+                    <div className={`absolute rounded-md ${stat.iconBg} p-3`}>
+                      <stat.icon aria-hidden="true" className="h-6 w-6 text-white" />
+                    </div>
+                    <p className="ml-16 truncate text-sm font-medium text-slate-500">{stat.name}</p>
+                  </dt>
+                  <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
+                    <p className="text-3xl font-semibold text-slate-900">{stat.stat}</p>
+                  </dd>
+                  <div className="absolute inset-x-0 bottom-0 bg-slate-50 px-4 py-4 sm:px-6">
+                    <div className="text-sm">
+                      <span className="font-medium text-indigo-600 transition-colors group-hover:text-indigo-500">
+                        View all<span className="sr-only"> {stat.name}</span>
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                </div>
+              </Link>
+            ))}
+          </dl>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card className="border-slate-200 bg-white shadow-md">
+          <Card className="border-slate-200 bg-white">
             <CardHeader>
               <CardTitle className="mb-2 flex items-center gap-2 text-slate-900">
                 <FileText className="h-5 w-5 text-blue-600" />
@@ -138,7 +132,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 bg-white shadow-md">
+          <Card className="border-slate-200 bg-white">
             <CardHeader>
               <CardTitle className="mb-2 text-slate-900">Quick Actions</CardTitle>
             </CardHeader>

@@ -189,47 +189,45 @@ export default function Search() {
           <p className="text-slate-600">Find subjects, topics, and learning outcomes</p>
         </div>
 
-        <Card className="border-slate-200 bg-white shadow-lg">
+        <Card className="border-slate-200 bg-white">
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  className="pl-11 h-12 text-lg"
+                  className="pl-10 h-10 text-sm/6"
                   placeholder="Search by keyword..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="flex gap-3">
-                <div className="grid grid-cols-1 w-48">
-                  <select
-                    value={filterType}
-                    onChange={(event) => setFilterType(event.target.value as SearchFilterType)}
-                    className={nativeSelectClass}
-                  >
-                    <option value="all">All Types</option>
-                    <option value="subjects">Subjects</option>
-                    <option value="topics">Topics</option>
-                    <option value="outcomes">Learning Outcomes</option>
-                  </select>
-                  <ChevronDown aria-hidden="true" className={chevronClass} />
-                </div>
-                <div className="grid grid-cols-1 w-48">
-                  <select
-                    value={filterLevel}
-                    onChange={(event) => setFilterLevel(event.target.value as SearchFilterLevel)}
-                    className={nativeSelectClass}
-                  >
-                    <option value="all">All Levels</option>
-                    <option value="I">Level I (1-3)</option>
-                    <option value="II">Level II (4-6)</option>
-                    <option value="III">Level III (7-9)</option>
-                    <option value="Gymnasium">Gymnasium (10-12)</option>
-                    <option value="University">University</option>
-                  </select>
-                  <ChevronDown aria-hidden="true" className={chevronClass} />
-                </div>
+              <div className="grid grid-cols-1 w-48">
+                <select
+                  value={filterType}
+                  onChange={(event) => setFilterType(event.target.value as SearchFilterType)}
+                  className={nativeSelectClass}
+                >
+                  <option value="all">All Types</option>
+                  <option value="subjects">Subjects</option>
+                  <option value="topics">Topics</option>
+                  <option value="outcomes">Learning Outcomes</option>
+                </select>
+                <ChevronDown aria-hidden="true" className={chevronClass} />
+              </div>
+              <div className="grid grid-cols-1 w-48">
+                <select
+                  value={filterLevel}
+                  onChange={(event) => setFilterLevel(event.target.value as SearchFilterLevel)}
+                  className={nativeSelectClass}
+                >
+                  <option value="all">All Levels</option>
+                  <option value="I">Level I (1-3)</option>
+                  <option value="II">Level II (4-6)</option>
+                  <option value="III">Level III (7-9)</option>
+                  <option value="Gymnasium">Gymnasium (10-12)</option>
+                  <option value="University">University</option>
+                </select>
+                <ChevronDown aria-hidden="true" className={chevronClass} />
               </div>
             </div>
           </CardContent>

@@ -9,7 +9,7 @@ export function Label({ className = "", children, ...props }: LabelProps) {
   return (
     <label
       {...props}
-      className={`text-sm font-medium text-slate-700 ${className}`}
+      className={`block text-sm/6 font-medium text-gray-900 ${className}`}
     >
       {children}
     </label>

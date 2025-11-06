@@ -106,7 +106,7 @@ export default function Subjects() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Kas oled kindel, et soovid selle õppeaine kustutada?")) {
+    if (window.confirm("Are you sure you want to delete this subject?")) {
       void deleteMutation.mutate(id);
     }
   };
@@ -116,8 +116,8 @@ export default function Subjects() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Õppeained</h1>
-            <p className="text-slate-600 mt-1">Halda õppekava õppeaineid</p>
+            <h1 className="text-3xl font-bold text-slate-900">Subjects</h1>
+            <p className="text-slate-600 mt-1">Manage curriculum subjects</p>
           </div>
           <Dialog open={open} onOpenChange={(isOpen) => {
             setOpen(isOpen);
@@ -126,57 +126,57 @@ export default function Subjects() {
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Lisa õppeaine
+                Add subject
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editingSubject ? 'Muuda õppeainet' : 'Lisa uus õppeaine'}</DialogTitle>
+                <DialogTitle>{editingSubject ? "Edit subject" : "Add new subject"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nimi (inglise keeles) *</Label>
+                    <Label htmlFor="name">Name (English) *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="nt Mathematics"
+                      placeholder="e.g. Mathematics"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="name_et">Nimi (eesti keeles)</Label>
+                    <Label htmlFor="name_et">Name (Estonian)</Label>
                     <Input
                       id="name_et"
                       value={formData.name_et}
                       onChange={(e) => setFormData({ ...formData, name_et: e.target.value })}
-                      placeholder="nt Matemaatika"
+                      placeholder="e.g. Matemaatika"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Kirjeldus</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Õppeaine kirjeldus"
+                    placeholder="Subject description"
                     rows={3}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="code">Kood</Label>
+                    <Label htmlFor="code">Code</Label>
                     <Input
                       id="code"
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      placeholder="nt MATH"
+                      placeholder="e.g. MATH"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="status">Olek</Label>
+                    <Label htmlFor="status">Status</Label>
                     <div className="mt-2 grid grid-cols-1">
                       <select
                         id="status"
@@ -189,8 +189,8 @@ export default function Subjects() {
                         }
                         className={nativeSelectClass}
                       >
-                        <option value="draft">Mustand</option>
-                        <option value="published">Avaldatud</option>
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
                       </select>
                       <ChevronDown aria-hidden="true" className={chevronClass} />
                     </div>
@@ -202,15 +202,15 @@ export default function Subjects() {
                     id="uri"
                     value={formData.uri}
                     onChange={(e) => setFormData({ ...formData, uri: e.target.value })}
-                    placeholder="nt https://oppekava.edu.ee/subjects/mathematics"
+                    placeholder="e.g. https://oppekava.edu.ee/subjects/mathematics"
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                    Tühista
+                    Cancel
                   </Button>
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    {editingSubject ? 'Uuenda' : 'Loo'} õppeaine
+                    {editingSubject ? "Update" : "Create"} subject
                   </Button>
                 </div>
               </form>
@@ -218,27 +218,27 @@ export default function Subjects() {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
+        <Card className="border-slate-200">
+          <CardHeader className="mb-4">
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-blue-600" />
-              Kõik õppeained
+              All subjects
             </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-center py-8 text-slate-500">Laadimine...</p>
+              <p className="text-center py-8 text-slate-500">Loading...</p>
             ) : subjects.length === 0 ? (
-              <p className="text-center py-8 text-slate-500">Õppeaineid pole veel. Lisa esimene õppeaine!</p>
+              <p className="text-center py-8 text-slate-500">No subjects yet. Create the first subject!</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nimi</TableHead>
-                    <TableHead>Kood</TableHead>
-                    <TableHead>Olek</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>URI</TableHead>
-                    <TableHead className="text-right">Tegevused</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -256,8 +256,8 @@ export default function Subjects() {
                         <Badge variant="outline">{subject.code || '—'}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={subject.status === 'published' ? 'default' : 'secondary'}>
-                          {subject.status === 'published' ? 'Avaldatud' : 'Mustand'}
+                        <Badge variant={subject.status === "published" ? "default" : "secondary"}>
+                          {subject.status === "published" ? "Published" : "Draft"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">

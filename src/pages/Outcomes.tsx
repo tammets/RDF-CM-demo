@@ -391,8 +391,8 @@ export default function Outcomes() {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
+        <Card className="border-slate-200">
+          <CardHeader className="mb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-purple-600" />
