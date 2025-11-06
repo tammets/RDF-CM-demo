@@ -9,6 +9,7 @@ import {
   Search,
   LogOut,
   Network,
+  Waypoints,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -45,15 +46,18 @@ export default function Layout() {
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-full">
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <BookOpen className="w-6 h-6 text-white" />
+          <Link
+            to="/"
+            className="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-rose-500 rounded-lg"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Waypoints className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="font-bold text-slate-900 text-lg">EduFlex RDF</h2>
               <p className="text-xs text-slate-500">Curriculum Manager</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation groups */}
