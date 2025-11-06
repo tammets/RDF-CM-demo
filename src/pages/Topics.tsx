@@ -189,7 +189,7 @@ export default function Topics() {
               <DialogHeader>
                 <DialogTitle>{editingTopic ? "Edit Topic" : "Add Topic"}</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 m-6">
                 <div className="space-y-2">
                   <Label htmlFor="subject_id">Subject *</Label>
                   <div className="mt-2 grid grid-cols-1">

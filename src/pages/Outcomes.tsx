@@ -247,7 +247,7 @@ export default function Outcomes() {
               <DialogHeader>
                 <DialogTitle>{editingOutcome ? "Edit Learning Outcome" : "Add Learning Outcome"}</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 m-6">
                 <div className="space-y-2">
                   <Label htmlFor="topic_id">Topic *</Label>
                   <div className="mt-2 grid grid-cols-1">
