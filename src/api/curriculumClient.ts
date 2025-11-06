@@ -46,6 +46,13 @@ type CurriculumState = {
 
 const STORAGE_KEY = "curriculum-demo-state";
 
+function resolvePublicAsset(pathname: string) {
+  const base = import.meta.env?.BASE_URL ?? "/";
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const normalizedPath = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 const defaultState: CurriculumState = {
   subjects: [
     makeSubject({
@@ -498,9 +505,9 @@ type SerializedOutcome = {
 async function fetchSplitDataset(): Promise<CurriculumState | null> {
   try {
     const [subjectsRes, topicsRes, outcomesRes] = await Promise.all([
-      fetch("/data/subjects.json", { cache: "no-store" }),
-      fetch("/data/topics.json", { cache: "no-store" }),
-      fetch("/data/outcomes.json", { cache: "no-store" }),
+      fetch(resolvePublicAsset("data/subjects.json"), { cache: "no-store" }),
+      fetch(resolvePublicAsset("data/topics.json"), { cache: "no-store" }),
+      fetch(resolvePublicAsset("data/outcomes.json"), { cache: "no-store" }),
     ]);
 
     if (!subjectsRes.ok || !topicsRes.ok || !outcomesRes.ok) {
@@ -592,7 +599,7 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
 }
 
 async function loadFromCombinedFile(): Promise<CurriculumState> {
-  const response = await fetch("/data/oppekava.json", { cache: "no-store" });
+  const response = await fetch(resolvePublicAsset("data/oppekava.json"), { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`Failed to load dataset: ${response.status} ${response.statusText}`);
   }
