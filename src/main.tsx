@@ -12,10 +12,13 @@ const datasetReady = curriculum.load().catch((error) => {
   console.error("Failed to load curriculum dataset", error);
 });
 
+const basename =
+  import.meta.env.BASE_URL === "/" ? undefined : import.meta.env.BASE_URL.replace(/\/$/, "");
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <App datasetReady={datasetReady} />
       </BrowserRouter>
     </QueryClientProvider>
