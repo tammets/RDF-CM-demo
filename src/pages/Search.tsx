@@ -95,7 +95,7 @@ export default function Search() {
             type: "subject",
             id: subject.id,
             title: subject.title,
-            title_et: subject.title,
+            title_et: undefined,
             description: subject.description,
             status: subject.status,
             uri: subject.uri,

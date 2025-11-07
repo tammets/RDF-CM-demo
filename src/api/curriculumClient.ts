@@ -16,6 +16,7 @@ export type Topic = BaseEntity & {
   name_et?: string;
   description?: string;
   subject_id: string;
+  parent_topic_id?: string | null;
   uri?: string;
   order_index?: number;
   status?: "draft" | "published";
@@ -308,6 +309,10 @@ function loadInitialState(): CurriculumState {
                 title: legacy.title ?? legacy.name ?? legacy.name_et ?? "Untitled subject",
               };
             }),
+            topics: stored.topics.map((topic) => ({
+              ...topic,
+              parent_topic_id: topic.parent_topic_id ?? undefined,
+            })),
             skillBits: Array.isArray(stored.skillBits) ? stored.skillBits : [],
           };
         }
@@ -398,6 +403,81 @@ function normalizeSkillBitOrders(outcomeId?: string) {
     ...state,
     skillBits: sortSkillBits([...others, ...normalized]),
   };
+}
+
+function buildTopicChildMap() {
+  const map = new Map<string, string[]>();
+  state.topics.forEach((topic) => {
+    const parentId = topic.parent_topic_id ?? undefined;
+    if (!parentId) return;
+    const siblings = map.get(parentId);
+    if (siblings) {
+      siblings.push(topic.id);
+    } else {
+      map.set(parentId, [topic.id]);
+    }
+  });
+  return map;
+}
+
+function collectDescendantTopicIds(topicId: string) {
+  const descendants: string[] = [];
+  const childMap = buildTopicChildMap();
+  const queue = [...(childMap.get(topicId) ?? [])];
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    descendants.push(currentId);
+    const children = childMap.get(currentId);
+    if (children?.length) {
+      queue.push(...children);
+    }
+  }
+  return descendants;
+}
+
+function topicHasAncestor(candidateId: string, ancestorId: string) {
+  const visited = new Set<string>();
+  let current = state.topics.find((topic) => topic.id === candidateId);
+  while (current?.parent_topic_id) {
+    const parentId = current.parent_topic_id;
+    if (parentId === ancestorId) {
+      return true;
+    }
+    if (visited.has(parentId)) {
+      break;
+    }
+    visited.add(parentId);
+    current = state.topics.find((topic) => topic.id === parentId);
+  }
+  return false;
+}
+
+function normalizeParentTopicId(value?: string | null) {
+  if (typeof value !== "string" || !value.trim()) {
+    return undefined;
+  }
+  return value;
+}
+
+function validateParentTopicAssignment(subjectId: string, rawParentId?: string | null, topicId?: string) {
+  const parentId = normalizeParentTopicId(rawParentId);
+  if (!parentId) {
+    return undefined;
+  }
+  const parent = state.topics.find((topic) => topic.id === parentId);
+  if (!parent) {
+    throw new Error(`Parent topic with id "${parentId}" not found`);
+  }
+  if (parent.subject_id !== subjectId) {
+    throw new Error("Parent topic must belong to the same subject");
+  }
+  if (topicId && parentId === topicId) {
+    throw new Error("Topic cannot be its own parent");
+  }
+  if (topicId && topicHasAncestor(parentId, topicId)) {
+    throw new Error("Cannot assign a descendant topic as the parent");
+  }
+  return parentId;
 }
 
 function deleteSkillBit(skillBitId: string) {
@@ -526,6 +606,18 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
         } as unknown as EntityInput<Name>;
       }
 
+      if (entityName === "Topic") {
+        const topicInput = data as unknown as EntityInput<"Topic">;
+        const validatedParentId = validateParentTopicAssignment(
+          topicInput.subject_id,
+          topicInput.parent_topic_id,
+        );
+        preparedData = {
+          ...topicInput,
+          parent_topic_id: validatedParentId,
+        } as unknown as EntityInput<Name>;
+      }
+
       const id = preparedData.id ?? createId(config.prefix);
       const entity = config.factory({ ...preparedData, id }) as EntityRecord<Name>;
 
@@ -563,9 +655,26 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
       }
 
       const previousRecord = collection[index];
+      let normalizedData = data;
+
+      if (entityName === "Topic") {
+        const topicInput = data as Partial<EntityInput<"Topic">>;
+        const currentTopic = previousRecord as Topic;
+        const nextSubjectId = (topicInput.subject_id ?? currentTopic.subject_id) as string;
+        const hasParentInPayload = Object.prototype.hasOwnProperty.call(topicInput, "parent_topic_id");
+        const nextParentCandidate = hasParentInPayload
+          ? topicInput.parent_topic_id ?? undefined
+          : currentTopic.parent_topic_id;
+        const validatedParentId = validateParentTopicAssignment(nextSubjectId, nextParentCandidate, currentTopic.id);
+        normalizedData = {
+          ...data,
+          parent_topic_id: validatedParentId,
+        };
+      }
+
       const updated: EntityRecord<Name> = {
         ...previousRecord,
-        ...data,
+        ...normalizedData,
         updated_at: now(),
       } as EntityRecord<Name>;
 
@@ -636,9 +745,13 @@ function cascadeDeleteSubject(subjectId: string) {
 }
 
 function cascadeDeleteTopic(topicId: string) {
-  const remainingTopics = state.topics.filter((topic) => topic.id !== topicId);
-  const outcomeIdsToDelete = state.outcomes.filter((outcome) => outcome.topic_id === topicId).map((outcome) => outcome.id);
-  const remainingOutcomes = state.outcomes.filter((outcome) => outcome.topic_id !== topicId);
+  const descendantIds = collectDescendantTopicIds(topicId);
+  const idsToDelete = new Set([topicId, ...descendantIds]);
+  const remainingTopics = state.topics.filter((topic) => !idsToDelete.has(topic.id));
+  const outcomeIdsToDelete = state.outcomes
+    .filter((outcome) => idsToDelete.has(outcome.topic_id))
+    .map((outcome) => outcome.id);
+  const remainingOutcomes = state.outcomes.filter((outcome) => !idsToDelete.has(outcome.topic_id));
   const remainingSkillBits = state.skillBits.filter((skill) => !outcomeIdsToDelete.includes(skill.outcome_id));
 
   state = {
@@ -716,6 +829,7 @@ type SerializedTopic = {
   name?: string | null;
   name_et?: string | null;
   description?: string | null;
+  parent_topic_id?: string | null;
   uri?: string | null;
   order_index?: number | null;
   status?: "draft" | "published" | null;
@@ -799,6 +913,7 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
         name: record.name ?? `Teema ${index + 1}`,
         name_et: record.name_et ?? record.name ?? `Teema ${index + 1}`,
         description: record.description ?? undefined,
+        parent_topic_id: record.parent_topic_id ?? undefined,
         uri: record.uri ?? undefined,
         order_index: record.order_index ?? index,
         status: (record.status as Topic["status"]) ?? "draft",
@@ -806,6 +921,15 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
     });
 
     const topicSet = new Set(topicRecords.map((topic) => topic.id));
+    const topicById = new Map(topicRecords.map((topic) => [topic.id, topic]));
+    topicRecords.forEach((topic) => {
+      const parentId = topic.parent_topic_id ?? undefined;
+      if (!parentId) return;
+      const parent = topicById.get(parentId);
+      if (!parent || parent.subject_id !== topic.subject_id || parent.id === topic.id) {
+        topic.parent_topic_id = undefined;
+      }
+    });
     const outcomeLookup = new Map<string, LearningOutcome>();
     const outcomeRecords = outcomesRaw.map((record, index) => {
       const topicId = topicSet.has(record.topic_id ?? "")
@@ -921,6 +1045,10 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
   const topicUsage = new Map<string, number>();
   const topicRecords: Topic[] = [];
   const topicLookup = new Map<string, string>();
+  const pendingParentAssignments: Array<{
+    record: Topic;
+    parentRefs: string[];
+  }> = [];
 
   raw.topics?.forEach((topic, index) => {
     const subjectName = topic.subject?.find((name) => subjectNameToId.has(name));
@@ -930,22 +1058,76 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
     const subjectId = subjectNameToId.get(subjectName)!;
     const name = topic.text?.trim() || topic.url?.trim() || `Teema ${index + 1}`;
     const id = ensureUniqueId("topic", name, index, topicUsage);
+    const parentRefs =
+      Array.isArray(topic.parent_topic) && topic.parent_topic.length
+        ? topic.parent_topic.filter(
+            (value): value is string => typeof value === "string" && Boolean(value.trim()),
+          )
+        : [];
     const record = makeTopic({
       id,
       subject_id: subjectId,
       name,
       name_et: name,
       description: topic.parent_topic?.join(", ") || undefined,
+      parent_topic_id: undefined,
       uri: topic.url,
       order_index: index,
       status: "published",
     });
     topicRecords.push(record);
+    pendingParentAssignments.push({
+      record,
+      parentRefs,
+    });
     if (topic.text) {
+      const trimmed = topic.text.trim();
       topicLookup.set(topic.text, id);
+      if (trimmed && trimmed !== topic.text) {
+        topicLookup.set(trimmed, id);
+      }
     }
     if (topic.url) {
+      const trimmedUrl = topic.url.trim();
       topicLookup.set(topic.url, id);
+      if (trimmedUrl && trimmedUrl !== topic.url) {
+        topicLookup.set(trimmedUrl, id);
+      }
+    }
+  });
+
+  const topicById = new Map(topicRecords.map((topic) => [topic.id, topic]));
+  const createsCycle = (candidateParentId: string, childId: string) => {
+    let cursor = topicById.get(candidateParentId);
+    const visited = new Set<string>();
+    while (cursor?.parent_topic_id) {
+      if (cursor.parent_topic_id === childId) {
+        return true;
+      }
+      if (visited.has(cursor.parent_topic_id)) {
+        break;
+      }
+      visited.add(cursor.parent_topic_id);
+      cursor = topicById.get(cursor.parent_topic_id);
+    }
+    return false;
+  };
+  pendingParentAssignments.forEach(({ record, parentRefs }) => {
+    for (const ref of parentRefs) {
+      const trimmedRef = ref.trim();
+      const parentId = topicLookup.get(trimmedRef) ?? topicLookup.get(ref);
+      if (!parentId || parentId === record.id) {
+        continue;
+      }
+      const parentRecord = topicById.get(parentId);
+      if (!parentRecord || parentRecord.subject_id !== record.subject_id) {
+        continue;
+      }
+      if (createsCycle(parentId, record.id)) {
+        continue;
+      }
+      record.parent_topic_id = parentId;
+      break;
     }
   });
 

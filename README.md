@@ -43,6 +43,10 @@ npm run preview
 - `src/api/curriculumClient.ts` – In-memory/localStorage curriculum dataset and helper functions
 - `src/components/*` – Reusable UI widgets
 
+### Dataset utilities
+
+- `npm run data:enrich-topics` – replays `public/data/oppekava.json` to backfill `parent_topic_id` fields into `public/data/topics.json` so split datasets keep the topic hierarchy without fetching the large combined file at runtime.
+
 ### Skillbit / Osaoskused model
 
 Each learning outcome can now contain a flat list of skill-bits (osaoskused). They have a required label plus an optional manual order value and are stored in `curriculumClient` alongside the other entities. Inline editors on the Outcomes and Subjects pages let you add, edit, delete, and reorder these entries; the Browse view shows them read-only. The export page emits `eduschema:SkillBit` resources with `eduschema:hasSkillBit` / `eduschema:belongsToLearningOutcome` links so RDF consumers can traverse the hierarchy.

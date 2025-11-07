@@ -1,6 +1,7 @@
 
 import { useState, useMemo, useEffect, type FormEvent } from "react";
 import { curriculum, type Subject, type Topic as TopicEntity } from "@/api/curriculumClient";
+import { buildTopicTree, collectTopicDescendants, flattenTopicTree } from "@/lib/topicHierarchy";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ type TopicFormData = {
   name_et: string;
   description: string;
   subject_id: string;
+  parent_topic_id: string | null;
   uri: string;
   order_index: number;
   status: "draft" | "published";
@@ -39,6 +41,7 @@ export default function Topics() {
     name_et: "",
     description: "",
     subject_id: "",
+    parent_topic_id: null,
     uri: "",
     order_index: 0,
     status: "draft",
@@ -88,6 +91,7 @@ export default function Topics() {
       name_et: "",
       description: "",
       subject_id: "",
+      parent_topic_id: null,
       uri: "",
       order_index: 0,
       status: "draft",
@@ -111,6 +115,7 @@ export default function Topics() {
       name_et: topic.name_et || "",
       description: topic.description || "",
       subject_id: topic.subject_id || "",
+      parent_topic_id: topic.parent_topic_id ?? null,
       uri: topic.uri || "",
       order_index: topic.order_index || 0,
       status: (topic.status as TopicFormData["status"]) || "draft",
@@ -136,6 +141,33 @@ export default function Topics() {
         : topics.filter((topic) => topic.subject_id === filterSubject)),
     [topics, filterSubject],
   );
+
+  const topicLookup = useMemo(() => {
+    const map = new Map<string, TopicEntity>();
+    topics.forEach((topic) => map.set(topic.id, topic));
+    return map;
+  }, [topics]);
+
+  const parentOptions = useMemo(() => {
+    if (!formData.subject_id) {
+      return [];
+    }
+    const subjectTopics = topics.filter((topic) => topic.subject_id === formData.subject_id);
+    if (!subjectTopics.length) {
+      return [];
+    }
+    const tree = buildTopicTree(subjectTopics);
+    return flattenTopicTree(tree);
+  }, [formData.subject_id, topics]);
+
+  const blockedParentIds = useMemo(() => {
+    if (!editingTopic) {
+      return new Set<string>();
+    }
+    const blocked = collectTopicDescendants(topics, editingTopic.id);
+    blocked.add(editingTopic.id);
+    return blocked;
+  }, [editingTopic, topics]);
 
   useEffect(() => {
     const total = Math.max(1, Math.ceil(filteredTopics.length / PAGE_SIZE));
@@ -196,9 +228,14 @@ export default function Topics() {
                     <select
                       id="subject_id"
                       value={formData.subject_id}
-                      onChange={(event) =>
-                        setFormData({ ...formData, subject_id: event.target.value })
-                      }
+                      onChange={(event) => {
+                        const nextSubject = event.target.value;
+                        setFormData({
+                          ...formData,
+                          subject_id: nextSubject,
+                          parent_topic_id: null,
+                        });
+                      }}
                       required
                       className={nativeSelectClass}
                     >
@@ -212,6 +249,38 @@ export default function Topics() {
                     <ChevronDown aria-hidden="true" className={chevronClass} />
                   </div>
                 </div>
+                {formData.subject_id ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_topic_id">Parent topic</Label>
+                    <div className="mt-2 grid grid-cols-1">
+                      <select
+                        id="parent_topic_id"
+                        value={formData.parent_topic_id ?? ""}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            parent_topic_id: event.target.value ? event.target.value : null,
+                          })
+                        }
+                        className={nativeSelectClass}
+                      >
+                        <option value="">No parent (top-level topic)</option>
+                        {parentOptions
+                          .filter(({ topic }) => !blockedParentIds.has(topic.id))
+                          .map(({ topic, depth }) => {
+                            const prefix = depth ? `${"• ".repeat(depth)} ` : "";
+                            return (
+                              <option key={topic.id} value={topic.id}>
+                                {`${prefix}${topic.name}`}
+                              </option>
+                            );
+                          })}
+                      </select>
+                      <ChevronDown aria-hidden="true" className={chevronClass} />
+                    </div>
+                    <p className="text-xs text-slate-500">Only topics from the selected subject are available.</p>
+                  </div>
+                ) : null}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name (English) *</Label>
@@ -341,6 +410,7 @@ export default function Topics() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Subject</TableHead>
+                      <TableHead>Parent</TableHead>
                       <TableHead>Display Order</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -349,6 +419,8 @@ export default function Topics() {
                   <TableBody>
                     {paginatedTopics.map((topic) => {
                       const topicTitle = topic.name_et || topic.name || "Untitled topic";
+                      const parentTopic =
+                        topic.parent_topic_id ? topicLookup.get(topic.parent_topic_id) : null;
                       return (
                         <TableRow key={topic.id}>
                           <TableCell>
@@ -363,6 +435,13 @@ export default function Topics() {
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                               {getSubjectName(topic.subject_id)}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {parentTopic ? (
+                              <span className="text-sm text-slate-600">{parentTopic.name}</span>
+                            ) : (
+                              <span className="text-xs text-slate-400">—</span>
+                            )}
                           </TableCell>
                           <TableCell>{topic.order_index ?? 0}</TableCell>
                           <TableCell>

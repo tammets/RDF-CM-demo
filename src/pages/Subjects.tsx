@@ -1,6 +1,7 @@
 
 import { useState, useMemo, type FormEvent } from "react";
 import { curriculum, type Subject, type Topic, type LearningOutcome, type SkillBit } from "@/api/curriculumClient";
+import { buildTopicTreeBySubject, type TopicTreeNode } from "@/lib/topicHierarchy";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export default function Subjects() {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [detailsSubject, setDetailsSubject] = useState<Subject | null>(null);
   const [focusOutcomeId, setFocusOutcomeId] = useState<string | null>(null);
+  const [uriTouched, setUriTouched] = useState(false);
   const [formData, setFormData] = useState<SubjectFormData>({
     title: "",
     description: "",
@@ -96,6 +98,8 @@ export default function Subjects() {
     return map;
   }, [topics]);
 
+  const topicTreesBySubject = useMemo(() => buildTopicTreeBySubject(topics), [topics]);
+
   const outcomeCountBySubject = useMemo(() => {
     const topicToSubject = new Map<string, string>();
     topics.forEach((topic) => {
@@ -109,6 +113,27 @@ export default function Subjects() {
     });
     return counts;
   }, [topics, outcomes]);
+
+  const outcomesByTopic = useMemo(() => {
+    const map: Record<string, LearningOutcome[]> = {};
+    outcomes.forEach((outcome) => {
+      if (!map[outcome.topic_id]) {
+        map[outcome.topic_id] = [];
+      }
+      map[outcome.topic_id].push(outcome);
+    });
+    Object.values(map).forEach((list) =>
+      list.sort((a, b) => {
+        const aOrder = a.order_index ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.order_index ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.created_at - a.created_at;
+      }),
+    );
+    return map;
+  }, [outcomes]);
 
   const skillBitsByOutcome = useMemo(() => {
     const map: Record<string, SkillBit[]> = {};
@@ -139,6 +164,7 @@ export default function Subjects() {
       status: "draft",
     });
     setEditingSubject(null);
+    setUriTouched(false);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -159,6 +185,7 @@ export default function Subjects() {
       status: (subject.status as SubjectFormData["status"]) || "draft",
     });
     setOpen(true);
+    setUriTouched(Boolean(subject.uri));
   };
 
   const handleDelete = (id: string) => {
@@ -170,6 +197,111 @@ export default function Subjects() {
   const openStructureDialog = (subject: Subject) => {
     setDetailsSubject(subject);
     setFocusOutcomeId(null);
+  };
+
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/ä/g, "a")
+      .replace(/ö/g, "o")
+      .replace(/ü/g, "u")
+      .replace(/õ/g, "o")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const maybeUpdateUriFromTitle = (nextTitle: string) => {
+    if (uriTouched) return;
+    const slug = slugify(nextTitle);
+    setFormData((prev) => ({
+      ...prev,
+      uri: slug ? `/subjects/${slug}` : "",
+    }));
+  };
+
+  const TopicStructure = ({ node, depth = 0 }: { node: TopicTreeNode; depth?: number }) => {
+    const topic = node.topic;
+    const topicOutcomes = outcomesByTopic[topic.id] ?? [];
+    const childNodes = node.children;
+    return (
+      <div
+        className={`rounded-lg border border-slate-200 bg-slate-50 p-4 ${depth ? "ml-4" : ""}`}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-semibold text-slate-900">{topic.name}</h4>
+              {depth > 0 ? (
+                <Badge variant="outline" className="text-[10px] uppercase border-blue-200 text-blue-700 bg-blue-50/70">
+                  Subtopic
+                </Badge>
+              ) : null}
+            </div>
+            {topic.description && (
+              <p className="text-sm text-slate-600 mt-1">{topic.description}</p>
+            )}
+          </div>
+          <Badge variant="secondary">{topicOutcomes.length} outcomes</Badge>
+        </div>
+        <div className="mt-4 space-y-3">
+          {topicOutcomes.length === 0 ? (
+            <p className="text-sm text-slate-500">No learning outcomes under this topic.</p>
+          ) : (
+            topicOutcomes.map((outcome) => {
+              const skills = skillBitsByOutcome[outcome.id] ?? [];
+              const isFocused = focusOutcomeId === outcome.id;
+              return (
+                <div key={outcome.id} className="rounded-md border border-white bg-white p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {outcome.text_et || outcome.text || "Learning outcome"}
+                      </p>
+                      <p className="text-xs text-slate-500">{skills.length} skill-bits</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setFocusOutcomeId(isFocused ? null : outcome.id)}
+                      >
+                        {isFocused ? "Hide editor" : "Quick add"}
+                      </Button>
+                    </div>
+                  </div>
+                  {skills.length > 0 ? (
+                    <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                      {skills.map((skill) => (
+                        <li key={skill.id} className="flex items-start gap-2">
+                          <span className="text-xs font-mono text-slate-400">
+                            {skill.manual_order ?? "•"}.
+                          </span>
+                          <span>{skill.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-slate-500">No skill-bits yet.</p>
+                  )}
+                  {isFocused ? (
+                    <div className="mt-4 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
+                      <SkillBitPanel outcome={outcome} />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })
+          )}
+        </div>
+        {childNodes.length > 0 ? (
+          <div className="mt-4 space-y-3 border-l border-dashed border-slate-200 pl-4">
+            {childNodes.map((child) => (
+              <TopicStructure key={child.topic.id} node={child} depth={(depth ?? 0) + 1} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -201,7 +333,11 @@ export default function Subjects() {
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) => {
+                      const nextTitle = e.target.value;
+                      setFormData({ ...formData, title: nextTitle });
+                      maybeUpdateUriFromTitle(nextTitle);
+                    }}
                     placeholder="e.g. Mathematics"
                     required
                   />
@@ -239,16 +375,11 @@ export default function Subjects() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>ID</Label>
-                    <Input value={editingSubject?.id ?? "Will be generated"} disabled readOnly />
+                  <Input value={editingSubject?.id ?? "Will be generated"} disabled readOnly />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="uri">RDF URI</Label>
-                    <Input
-                      id="uri"
-                      value={formData.uri}
-                      onChange={(e) => setFormData({ ...formData, uri: e.target.value })}
-                      placeholder="e.g. https://oppekava.edu.ee/subjects/mathematics"
-                    />
+                    <Input id="uri" value={formData.uri || "Will be generated"} disabled readOnly />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
@@ -379,80 +510,13 @@ export default function Subjects() {
           {detailsSubject ? (
             <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-2">
               {(() => {
-                const subjectTopics = (topicsBySubject[detailsSubject.id] ?? []).slice().sort(
-                  (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0),
-                );
-                if (subjectTopics.length === 0) {
+                const subjectTree = topicTreesBySubject[detailsSubject.id] ?? [];
+                if (subjectTree.length === 0) {
                   return <p className="text-sm text-slate-500">No topics linked to this subject yet.</p>;
                 }
-                return subjectTopics.map((topic) => {
-                  const topicOutcomes = outcomes
-                    .filter((outcome) => outcome.topic_id === topic.id)
-                    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
-                  return (
-                    <div key={topic.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">{topic.name}</h4>
-                          {topic.description && (
-                            <p className="text-sm text-slate-600 mt-1">{topic.description}</p>
-                          )}
-                        </div>
-                        <Badge variant="secondary">{topicOutcomes.length} outcomes</Badge>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        {topicOutcomes.length === 0 ? (
-                          <p className="text-sm text-slate-500">No learning outcomes under this topic.</p>
-                        ) : (
-                          topicOutcomes.map((outcome) => {
-                            const skills = skillBitsByOutcome[outcome.id] ?? [];
-                            const isFocused = focusOutcomeId === outcome.id;
-                            return (
-                              <div key={outcome.id} className="rounded-md border border-white bg-white p-3 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <p className="text-sm font-medium text-slate-900">
-                                      {outcome.text_et || outcome.text || "Learning outcome"}
-                                    </p>
-                                    <p className="text-xs text-slate-500">{skills.length} skill-bits</p>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => setFocusOutcomeId(isFocused ? null : outcome.id)}
-                                    >
-                                      {isFocused ? "Hide editor" : "Quick add"}
-                                    </Button>
-                                  </div>
-                                </div>
-                                {skills.length > 0 ? (
-                                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
-                                    {skills.map((skill) => (
-                                      <li key={skill.id} className="flex items-start gap-2">
-                                        <span className="text-xs font-mono text-slate-400">
-                                          {skill.manual_order ?? "•"}.
-                                        </span>
-                                        <span>{skill.label}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="mt-2 text-xs text-slate-500">No skill-bits yet.</p>
-                                )}
-                                {isFocused ? (
-                                  <div className="mt-4 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
-                                    <SkillBitPanel outcome={outcome} />
-                                  </div>
-                                ) : null}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  );
-                });
+                return subjectTree.map((node) => (
+                  <TopicStructure key={node.topic.id} node={node} depth={0} />
+                ));
               })()}
             </div>
           ) : null}

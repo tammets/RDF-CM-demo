@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { curriculum, type Subject, type Topic, type LearningOutcome, type SkillBit } from "@/api/curriculumClient";
+import { buildTopicTreeBySubject, type TopicTreeNode } from "@/lib/topicHierarchy";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,37 @@ export default function Browse() {
     return map;
   }, [skillBits]);
 
+  const topicTreesBySubject = useMemo(() => buildTopicTreeBySubject(topics), [topics]);
+
+  const topicCountBySubject = useMemo(() => {
+    const counts: Record<string, number> = {};
+    topics.forEach((topic) => {
+      counts[topic.subject_id] = (counts[topic.subject_id] ?? 0) + 1;
+    });
+    return counts;
+  }, [topics]);
+
+  const outcomesByTopic = useMemo(() => {
+    const map: Record<string, LearningOutcome[]> = {};
+    outcomes.forEach((outcome) => {
+      if (!map[outcome.topic_id]) {
+        map[outcome.topic_id] = [];
+      }
+      map[outcome.topic_id].push(outcome);
+    });
+    Object.values(map).forEach((list) =>
+      list.sort((a, b) => {
+        const aOrder = a.order_index ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.order_index ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.created_at - a.created_at;
+      }),
+    );
+    return map;
+  }, [outcomes]);
+
   const toggleSubject = (subjectId: string) => {
     setExpandedSubjects((prev) => ({
       ...prev,
@@ -71,20 +103,153 @@ export default function Browse() {
     }));
   };
 
-  const getTopicsForSubject = (subjectId: string) => {
-    return topics
-      .filter((topic) => topic.subject_id === subjectId)
-      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-  };
-
   const getOutcomesForTopic = (topicId: string) => {
-    return outcomes
-      .filter((outcome) => outcome.topic_id === topicId)
-      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    return outcomesByTopic[topicId] ?? [];
   };
 
   const openRelationsForOutcome = (outcomeId: string) => {
     navigate(`/relations?outcome=${outcomeId}`);
+  };
+
+  const TopicCard = ({ node, depth = 0 }: { node: TopicTreeNode; depth?: number }) => {
+    const topic = node.topic;
+    const isTopicExpanded = expandedTopics[topic.id];
+    const topicOutcomes = getOutcomesForTopic(topic.id);
+    const childNodes = node.children;
+    return (
+      <div style={{ marginLeft: depth ? depth * 16 : 0 }}>
+        <Card className="border-indigo-200 bg-white">
+          <div
+            className="p-4 cursor-pointer hover:bg-indigo-50/50 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTopic(topic.id);
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+                  <BookMarked className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium text-slate-900">{topic.name}</h4>
+                    {depth > 0 ? (
+                      <Badge variant="outline" className="text-[10px] uppercase border-indigo-200 text-indigo-600 bg-indigo-50/60">
+                        Subtopic
+                      </Badge>
+                    ) : null}
+                  </div>
+                  {topic.name_et && (
+                    <p className="text-xs text-slate-500 mt-0.5">{topic.name_et}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {topicOutcomes.length} outcomes
+                  </Badge>
+                  {isTopicExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {isTopicExpanded && (
+            <div className="border-t border-indigo-100 bg-purple-50/30 p-4 space-y-4">
+              {topicOutcomes.length > 0 ? (
+                <div className="space-y-2">
+                  {topicOutcomes.map((outcome) => {
+                    const skills = skillBitsByOutcome[outcome.id] ?? [];
+                    return (
+                      <div
+                        key={outcome.id}
+                        role="button"
+                        tabIndex={0}
+                        className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer transition-all hover:border-purple-400 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+                        onClick={() => openRelationsForOutcome(outcome.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openRelationsForOutcome(outcome.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
+                            <Target className="w-3 h-3 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-900">{outcome.text_et || outcome.text || "Learning outcome"}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{outcome.school_level || "Level TBD"}</p>
+                            {outcome.uri && (
+                              <a
+                                href={outcome.uri}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:underline mt-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                View RDF URI
+                              </a>
+                            )}
+                            {skills.length > 0 ? (
+                              <div className="mt-3 rounded-md border border-purple-100 bg-purple-50/50 p-3">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                  Skill-bits
+                                </p>
+                                <ul className="mt-2 space-y-1">
+                                  {skills.map((skill) => (
+                                    <li key={skill.id} className="flex items-center gap-2 text-xs text-slate-700">
+                                      <span className="font-mono text-[11px] text-slate-400">
+                                        {skill.manual_order ?? "•"}.
+                                      </span>
+                                      <span className="flex-1">{skill.label}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <p className="mt-3 text-xs text-slate-500">No skill-bits yet.</p>
+                            )}
+                            <div className="mt-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setSkillBitOutcome(outcome);
+                                }}
+                              >
+                                Manage skill-bits
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-slate-500 text-sm py-4">No learning outcomes yet</p>
+              )}
+
+              {childNodes.length > 0 ? (
+                <div className="space-y-3">
+                  {childNodes.map((child) => (
+                    <TopicCard key={child.topic.id} node={child} depth={(depth ?? 0) + 1} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </Card>
+      </div>
+    );
   };
 
   return (
@@ -98,8 +263,9 @@ export default function Browse() {
         <div className="space-y-4">
           {subjects.map((subject) => {
             const isExpanded = expandedSubjects[subject.id];
-            const subjectTopics = getTopicsForSubject(subject.id);
-            
+            const subjectTopics = topicTreesBySubject[subject.id] ?? [];
+            const topicCount = topicCountBySubject[subject.id] ?? 0;
+
             return (
               <Card key={subject.id} className="border-slate-200 bg-white overflow-hidden">
                 <div 
@@ -133,141 +299,11 @@ export default function Browse() {
 
                 {isExpanded && (
                   <div className="border-t border-slate-200 bg-slate-50/50">
-                    {subjectTopics.length > 0 ? (
+                    {topicCount > 0 ? (
                       <div className="p-4 space-y-3">
-                        {subjectTopics.map((topic) => {
-                          const isTopicExpanded = expandedTopics[topic.id];
-                          const topicOutcomes = getOutcomesForTopic(topic.id);
-                          
-                          return (
-                            <Card key={topic.id} className="border-indigo-200 bg-white">
-                              <div 
-                                className="p-4 cursor-pointer hover:bg-indigo-50/50 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleTopic(topic.id);
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
-                                      <BookMarked className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="font-medium text-slate-900">{topic.name}</h4>
-                                      </div>
-                                      {topic.name_et && (
-                                        <p className="text-xs text-slate-500 mt-0.5">{topic.name_et}</p>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="secondary" className="text-xs">
-                                        {topicOutcomes.length} outcomes
-                                      </Badge>
-                                      {isTopicExpanded ? (
-                                        <ChevronDown className="w-4 h-4 text-slate-400" />
-                                      ) : (
-                                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {isTopicExpanded && (
-                                <div className="border-t border-indigo-100 bg-purple-50/30 p-4">
-                                  {topicOutcomes.length > 0 ? (
-                                    <div className="space-y-2">
-                                      {topicOutcomes.map((outcome) => {
-                                        const skills = skillBitsByOutcome[outcome.id] ?? [];
-                                        return (
-                                          <div
-                                            key={outcome.id}
-                                            role="button"
-                                            tabIndex={0}
-                                            className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer transition-all hover:border-purple-400 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-                                            onClick={() => openRelationsForOutcome(outcome.id)}
-                                            onKeyDown={(event) => {
-                                              if (event.key === "Enter" || event.key === " ") {
-                                                event.preventDefault();
-                                                openRelationsForOutcome(outcome.id);
-                                              }
-                                            }}
-                                          >
-                                            <div className="flex items-start gap-3">
-                                              <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
-                                                <Target className="w-3 h-3 text-white" />
-                                              </div>
-                                              <div className="flex-1">
-                                                <div className="flex items-start justify-between gap-3">
-                                                  <p className="text-sm text-slate-900">{outcome.text}</p>
-                                                  <div className="flex items-center gap-2 shrink-0">
-                                                    <Badge variant="secondary" className="text-xs">
-                                                      {outcome.school_level}
-                                                    </Badge>
-                                                  </div>
-                                                </div>
-                                                {outcome.text_et && (
-                                                  <p className="text-xs text-slate-500 mt-1">{outcome.text_et}</p>
-                                                )}
-                                                {outcome.uri && (
-                                                  <a 
-                                                    href={outcome.uri} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-2"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                  >
-                                                    <ExternalLink className="w-3 h-3" />
-                                                    View RDF URI
-                                                  </a>
-                                                )}
-                                                {skills.length > 0 ? (
-                                                  <div className="mt-3 rounded-md border border-purple-100 bg-purple-50/50 p-3">
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                                                      Skill-bits
-                                                    </p>
-                                                    <ul className="mt-2 space-y-1">
-                                                      {skills.map((skill) => (
-                                                        <li key={skill.id} className="flex items-center gap-2 text-xs text-slate-700">
-                                                          <span className="font-mono text-[11px] text-slate-400">
-                                                            {skill.manual_order ?? "•"}.
-                                                          </span>
-                                                          <span className="flex-1">{skill.label}</span>
-                                                        </li>
-                                                      ))}
-                                                    </ul>
-                                                  </div>
-                                                ) : (
-                                                  <p className="mt-3 text-xs text-slate-500">No skill-bits yet.</p>
-                                                )}
-                                                <div className="mt-2">
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={(event) => {
-                                                      event.stopPropagation();
-                                                      setSkillBitOutcome(outcome);
-                                                    }}
-                                                  >
-                                                    Manage skill-bits
-                                                  </Button>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <p className="text-center text-slate-500 text-sm py-4">No learning outcomes yet</p>
-                                  )}
-                                </div>
-                              )}
-                            </Card>
-                          );
-                        })}
+                        {subjectTopics.map((node) => (
+                          <TopicCard key={node.topic.id} node={node} depth={0} />
+                        ))}
                       </div>
                     ) : (
                       <p className="text-center text-slate-500 text-sm py-6">No topics yet</p>
@@ -277,7 +313,6 @@ export default function Browse() {
               </Card>
             );
           })}
-
           {subjects.length === 0 && (
             <Card className="border-slate-200 bg-white">
               <CardContent className="py-12">
