@@ -8,6 +8,7 @@ This repository contains a prototype UI for managing the Estonian national curri
 - **CRUD tooling** for Subjects, Topics, and Learning Outcomes backed by React Query and a local in-browser dataset (`src/api/curriculumClient.ts`).
 - **Pagination** for Topics and Learning Outcomes to keep the UI responsive on larger datasets.
 - **RDF-focused export page** with JSON-LD, Turtle, and simple JSON previews, plus schema reference and one-click download/copy actions.
+- **Skillbit (osaoskus) editing** directly inside outcome dialogs, subject drill-downs, and the browse tree with manual ordering and RDF links.
 - **Static prototype data** persisted via `localStorage` so edits stick between refreshes without a backend.
 
 ## Tech stack
@@ -41,6 +42,10 @@ npm run preview
 - `src/layout/Layout.tsx` – Sidebar shell shared by all routes
 - `src/api/curriculumClient.ts` – In-memory/localStorage curriculum dataset and helper functions
 - `src/components/*` – Reusable UI widgets
+
+### Skillbit / Osaoskused model
+
+Each learning outcome can now contain a flat list of skill-bits (osaoskused). They have a required label plus an optional manual order value and are stored in `curriculumClient` alongside the other entities. Inline editors on the Outcomes and Subjects pages let you add, edit, delete, and reorder these entries; the Browse view shows them read-only. The export page emits `eduschema:SkillBit` resources with `eduschema:hasSkillBit` / `eduschema:belongsToLearningOutcome` links so RDF consumers can traverse the hierarchy.
 
 ## Roadmap ideas
 

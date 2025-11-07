@@ -126,7 +126,7 @@ export default function Topics() {
 
   const getSubjectName = (subjectId: string) => {
     const subject = subjects.find((item) => item.id === subjectId);
-    return subject ? subject.name_et || subject.name : "Unknown subject";
+    return subject ? subject.title : "Unknown subject";
   };
 
   const filteredTopics = useMemo(
@@ -205,7 +205,7 @@ export default function Topics() {
                       <option value="">Select subject</option>
                       {subjects.map((subject) => (
                         <option key={subject.id} value={subject.id}>
-                          {subject.name_et || subject.name}
+                          {subject.title}
                         </option>
                       ))}
                     </select>
@@ -320,7 +320,7 @@ export default function Topics() {
                     <option value="all">All subjects</option>
                     {subjects.map((subject) => (
                       <option key={subject.id} value={subject.id}>
-                        {subject.name_et || subject.name}
+                        {subject.title}
                       </option>
                     ))}
                   </select>

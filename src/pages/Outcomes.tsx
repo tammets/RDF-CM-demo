@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Target, Filter, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SkillBitManagerDialog } from "@/components/skillbits/SkillBitManagerDialog";
 
 type OutcomeFormData = {
   text_et: string;
@@ -38,6 +39,7 @@ export default function Outcomes() {
   const [filterTopic, setFilterTopic] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [skillBitOutcome, setSkillBitOutcome] = useState<OutcomeEntity | null>(null);
   const [formData, setFormData] = useState<OutcomeFormData>({
     text_et: "",
     topic_id: "",
@@ -62,6 +64,11 @@ export default function Outcomes() {
   const { data: outcomes = [], isLoading } = useQuery<OutcomeEntity[]>({
     queryKey: ["outcomes"],
     queryFn: () => curriculum.entities.LearningOutcome.list("-created_date"),
+  });
+
+  const { data: skillBitCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["skillbit-counts"],
+    queryFn: () => curriculum.skillBits.countByOutcome(),
   });
 
   const createMutation = useMutation({
@@ -263,7 +270,7 @@ export default function Outcomes() {
                       <option value="">Select topic</option>
                       {topics.map((topic) => {
                         const subject = getSubjectForTopic(topic.id);
-                        const label = subject ? `${subject.name} -> ${topic.name}` : topic.name;
+                        const label = subject ? `${subject.title} -> ${topic.name}` : topic.name;
                         return (
                           <option key={topic.id} value={topic.id}>
                             {label}
@@ -451,6 +458,7 @@ export default function Outcomes() {
                       <TableHead>Topic</TableHead>
                       <TableHead>School Level</TableHead>
                       <TableHead>Grade</TableHead>
+                      <TableHead>Skill-bits</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -477,6 +485,18 @@ export default function Outcomes() {
                             ) : (
                               <span className="text-sm text-slate-400">-</span>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col items-start gap-1">
+                              <Badge variant="outline">{skillBitCounts[outcome.id] ?? 0} items</Badge>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSkillBitOutcome(outcome)}
+                              >
+                                Manage
+                              </Button>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={outcome.status === "published" ? "default" : "secondary"}>
@@ -539,6 +559,15 @@ export default function Outcomes() {
           </CardContent>
         </Card>
       </div>
+      <SkillBitManagerDialog
+        outcome={skillBitOutcome}
+        open={Boolean(skillBitOutcome)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSkillBitOutcome(null);
+          }
+        }}
+      />
     </div>
   );
 }

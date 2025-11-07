@@ -1,0 +1,50 @@
+[
+  {
+    "id": "skill-lo-1-1",
+    "label": "Identifies least common denominators for complex fractions",
+    "outcome_id": "lo-1",
+    "manual_order": 1
+  },
+  {
+    "id": "skill-lo-1-2",
+    "label": "Performs multi-step fraction calculations without a calculator",
+    "outcome_id": "lo-1",
+    "manual_order": 2
+  },
+  {
+    "id": "skill-lo-2-1",
+    "label": "Transforms verbal algebra problems into linear equations",
+    "outcome_id": "lo-2",
+    "manual_order": 1
+  },
+  {
+    "id": "skill-lo-2-2",
+    "label": "Checks solutions by substitution",
+    "outcome_id": "lo-2",
+    "manual_order": 2
+  },
+  {
+    "id": "skill-lo-3-1",
+    "label": "Uses shared templates when writing release notes",
+    "outcome_id": "lo-3",
+    "manual_order": 1
+  },
+  {
+    "id": "skill-lo-3-2",
+    "label": "Publishes documentation updates in English within sprint cadence",
+    "outcome_id": "lo-3",
+    "manual_order": 2
+  },
+  {
+    "id": "skill-lo-4-1",
+    "label": "Facilitates daily stand-ups with clear blockers",
+    "outcome_id": "lo-4",
+    "manual_order": 1
+  },
+  {
+    "id": "skill-lo-4-2",
+    "label": "Prepares demo-ready increments for sprint reviews",
+    "outcome_id": "lo-4",
+    "manual_order": 2
+  }
+]

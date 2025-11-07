@@ -1,0 +1,22 @@
+{
+  "name": "SkillBit",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Concise description of the skillbit / osaoskus"
+    },
+    "outcome_id": {
+      "type": "string",
+      "description": "ID of the parent learning outcome"
+    },
+    "manual_order": {
+      "type": "number",
+      "description": "Optional manual ordering hint for display sequences"
+    }
+  },
+  "required": [
+    "label",
+    "outcome_id"
+  ]
+}

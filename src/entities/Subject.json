@@ -2,13 +2,9 @@
   "name": "Subject",
   "type": "object",
   "properties": {
-    "name": {
+    "title": {
       "type": "string",
-      "description": "Subject name (e.g., Mathematics, Estonian Language)"
-    },
-    "name_et": {
-      "type": "string",
-      "description": "Subject name in Estonian"
+      "description": "Subject title (e.g., Mathematics, Estonian Language)"
     },
     "description": {
       "type": "string",
@@ -17,10 +13,6 @@
     "uri": {
       "type": "string",
       "description": "RDF URI for this subject"
-    },
-    "code": {
-      "type": "string",
-      "description": "Short code for the subject"
     },
     "status": {
       "type": "string",
@@ -33,6 +25,6 @@
     }
   },
   "required": [
-    "name"
+    "title"
   ]
 }

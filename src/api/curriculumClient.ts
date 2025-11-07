@@ -5,11 +5,9 @@ type BaseEntity = {
 };
 
 export type Subject = BaseEntity & {
-  name: string;
-  name_et?: string;
+  title: string;
   description?: string;
   uri?: string;
-  code?: string;
   status?: "draft" | "published";
 };
 
@@ -38,10 +36,17 @@ export type LearningOutcome = BaseEntity & {
   related_outcomes?: string[];
 };
 
+export type SkillBit = BaseEntity & {
+  label: string;
+  outcome_id: string;
+  manual_order?: number;
+};
+
 type CurriculumState = {
   subjects: Subject[];
   topics: Topic[];
   outcomes: LearningOutcome[];
+  skillBits: SkillBit[];
 };
 
 const STORAGE_KEY = "curriculum-demo-state";
@@ -57,19 +62,15 @@ const defaultState: CurriculumState = {
   subjects: [
     makeSubject({
       id: "subj-math",
-      name: "Mathematics",
-      name_et: "Matemaatika",
+      title: "Mathematics",
       description: "Mathematics curriculum for Estonian schools",
-      code: "MATH",
       status: "published",
       uri: "https://oppekava.edu.ee/subjects/mathematics",
     }),
     makeSubject({
       id: "subj-prog",
-      name: "Programming",
-      name_et: "Programmeerimine",
+      title: "Programming",
       description: "Core programming skills and software development processes",
-      code: "PROG",
       status: "published",
       uri: "https://oppekava.edu.ee/subjects/programming",
     }),
@@ -152,6 +153,56 @@ const defaultState: CurriculumState = {
       consists_of: ["lo-3"],
     }),
   ],
+  skillBits: [
+    makeSkillBit({
+      id: "skill-lo-1-1",
+      outcome_id: "lo-1",
+      label: "Identifies least common denominators for complex fractions",
+      manual_order: 1,
+    }),
+    makeSkillBit({
+      id: "skill-lo-1-2",
+      outcome_id: "lo-1",
+      label: "Performs multi-step fraction calculations without a calculator",
+      manual_order: 2,
+    }),
+    makeSkillBit({
+      id: "skill-lo-2-1",
+      outcome_id: "lo-2",
+      label: "Transforms verbal algebra problems into linear equations",
+      manual_order: 1,
+    }),
+    makeSkillBit({
+      id: "skill-lo-2-2",
+      outcome_id: "lo-2",
+      label: "Checks solutions by substitution",
+      manual_order: 2,
+    }),
+    makeSkillBit({
+      id: "skill-lo-3-1",
+      outcome_id: "lo-3",
+      label: "Uses shared templates when writing release notes",
+      manual_order: 1,
+    }),
+    makeSkillBit({
+      id: "skill-lo-3-2",
+      outcome_id: "lo-3",
+      label: "Publishes documentation updates in English within sprint cadence",
+      manual_order: 2,
+    }),
+    makeSkillBit({
+      id: "skill-lo-4-1",
+      outcome_id: "lo-4",
+      label: "Facilitates daily stand-ups with clear blockers",
+      manual_order: 1,
+    }),
+    makeSkillBit({
+      id: "skill-lo-4-2",
+      outcome_id: "lo-4",
+      label: "Prepares demo-ready increments for sprint reviews",
+      manual_order: 2,
+    }),
+  ],
 };
 
 let state: CurriculumState = loadInitialState();
@@ -211,6 +262,13 @@ function makeOutcome(data: Omit<LearningOutcome, keyof BaseEntity> & { id?: stri
   };
 }
 
+function makeSkillBit(data: Omit<SkillBit, keyof BaseEntity> & { id?: string }): SkillBit {
+  return {
+    ...makeBase(data.id),
+    ...data,
+  };
+}
+
 function slugify(source: string, fallback: string) {
   const base = source
     .toLowerCase()
@@ -241,7 +299,17 @@ function loadInitialState(): CurriculumState {
       if (raw) {
         const stored = JSON.parse(raw) as CurriculumState;
         if (stored && stored.subjects && stored.topics && stored.outcomes) {
-          return stored;
+          return {
+            ...stored,
+            subjects: stored.subjects.map((subject) => {
+              const legacy = subject as Subject & { name?: string; name_et?: string };
+              return {
+                ...legacy,
+                title: legacy.title ?? legacy.name ?? legacy.name_et ?? "Untitled subject",
+              };
+            }),
+            skillBits: Array.isArray(stored.skillBits) ? stored.skillBits : [],
+          };
         }
       }
     } catch {
@@ -266,10 +334,20 @@ function notify() {
   }
 }
 
-function sortByOrder<T extends { order_index?: number; created_at: number }>(items: T[]): T[] {
+function getOrderingValue(item: { order_index?: number; manual_order?: number }) {
+  if (typeof item.order_index === "number") {
+    return item.order_index;
+  }
+  if (typeof item.manual_order === "number") {
+    return item.manual_order;
+  }
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function sortByOrder<T extends { order_index?: number; manual_order?: number; created_at: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => {
-    const aIndex = a.order_index ?? Number.MAX_SAFE_INTEGER;
-    const bIndex = b.order_index ?? Number.MAX_SAFE_INTEGER;
+    const aIndex = getOrderingValue(a);
+    const bIndex = getOrderingValue(b);
     if (aIndex !== bIndex) {
       return aIndex - bIndex;
     }
@@ -277,12 +355,106 @@ function sortByOrder<T extends { order_index?: number; created_at: number }>(ite
   });
 }
 
+function sortSkillBits(items: SkillBit[]): SkillBit[] {
+  return [...items].sort((a, b) => {
+    if (a.outcome_id !== b.outcome_id) {
+      return a.outcome_id.localeCompare(b.outcome_id);
+    }
+    const aIndex = getOrderingValue(a);
+    const bIndex = getOrderingValue(b);
+    if (aIndex !== bIndex) {
+      return aIndex - bIndex;
+    }
+    return b.created_at - a.created_at;
+  });
+}
+
+function getNextSkillBitOrder(outcomeId: string) {
+  const siblings = state.skillBits.filter((skill) => skill.outcome_id === outcomeId);
+  return siblings.length + 1;
+}
+
+function normalizeSkillBitOrders(outcomeId?: string) {
+  if (!outcomeId) return;
+  const siblings = state.skillBits.filter((skill) => skill.outcome_id === outcomeId);
+  if (!siblings.length) {
+    state = { ...state, skillBits: sortSkillBits(state.skillBits) };
+    return;
+  }
+  const ordered = sortByOrder(siblings);
+  const normalized = ordered.map((skill, index) => {
+    const nextOrder = index + 1;
+    if (skill.manual_order === nextOrder) {
+      return skill;
+    }
+    return {
+      ...skill,
+      manual_order: nextOrder,
+      updated_at: now(),
+    };
+  });
+  const others = state.skillBits.filter((skill) => skill.outcome_id !== outcomeId);
+  state = {
+    ...state,
+    skillBits: sortSkillBits([...others, ...normalized]),
+  };
+}
+
+function deleteSkillBit(skillBitId: string) {
+  const target = state.skillBits.find((skill) => skill.id === skillBitId);
+  if (!target) {
+    return;
+  }
+  state = {
+    ...state,
+    skillBits: state.skillBits.filter((skill) => skill.id !== skillBitId),
+  };
+  normalizeSkillBitOrders(target.outcome_id);
+}
+
+function moveSkillBit(skillBitId: string, delta: number): SkillBit | null {
+  if (delta === 0) {
+    return null;
+  }
+  const skill = state.skillBits.find((item) => item.id === skillBitId);
+  if (!skill) {
+    return null;
+  }
+  const siblings = sortByOrder(
+    state.skillBits.filter((item) => item.outcome_id === skill.outcome_id),
+  );
+  const currentIndex = siblings.findIndex((item) => item.id === skillBitId);
+  if (currentIndex === -1) {
+    return null;
+  }
+  const targetIndex = Math.max(0, Math.min(siblings.length - 1, currentIndex + delta));
+  if (currentIndex === targetIndex) {
+    return skill;
+  }
+
+  const [moved] = siblings.splice(currentIndex, 1);
+  siblings.splice(targetIndex, 0, moved);
+
+  const updatedSiblings = siblings.map((item, index) => ({
+    ...item,
+    manual_order: index + 1,
+    updated_at: now(),
+  }));
+
+  const others = state.skillBits.filter((item) => item.outcome_id !== skill.outcome_id);
+  state = {
+    ...state,
+    skillBits: sortSkillBits([...others, ...updatedSiblings]),
+  };
+  return updatedSiblings.find((item) => item.id === skillBitId) ?? null;
+}
+
 function sortByCreated<T extends BaseEntity>(items: T[], direction: "asc" | "desc" = "desc"): T[] {
   const sorted = [...items].sort((a, b) => a.created_at - b.created_at);
   return direction === "desc" ? sorted.reverse() : sorted;
 }
 
-type EntityName = "Subject" | "Topic" | "LearningOutcome";
+type EntityName = "Subject" | "Topic" | "LearningOutcome" | "SkillBit";
 
 const entityConfig: Record<
   EntityName,
@@ -295,13 +467,16 @@ const entityConfig: Record<
   Subject: { key: "subjects", prefix: "subj", factory: makeSubject },
   Topic: { key: "topics", prefix: "topic", factory: makeTopic },
   LearningOutcome: { key: "outcomes", prefix: "lo", factory: makeOutcome },
+  SkillBit: { key: "skillBits", prefix: "skill", factory: makeSkillBit },
 };
 
 type EntityRecord<Name extends EntityName> = Name extends "Subject"
   ? Subject
   : Name extends "Topic"
     ? Topic
-    : LearningOutcome;
+    : Name extends "LearningOutcome"
+      ? LearningOutcome
+      : SkillBit;
 
 type EntityInput<Name extends EntityName> = Omit<
   EntityRecord<Name>,
@@ -329,13 +504,30 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
           .reverse() as EntityRecord<Name>[];
       }
 
+      if (entityName === "SkillBit") {
+        items = sortSkillBits(items as SkillBit[]) as EntityRecord<Name>[];
+      }
+
       return clone(items);
     },
 
     async create(data: EntityInput<Name>): Promise<EntityRecord<Name>> {
       await ensureDatasetReady();
-      const id = data.id ?? createId(config.prefix);
-      const entity = config.factory({ ...data, id }) as EntityRecord<Name>;
+      let preparedData = data;
+      if (entityName === "SkillBit") {
+        const skillBitInput = data as unknown as EntityInput<"SkillBit">;
+        const manualOrder =
+          typeof skillBitInput.manual_order === "number"
+            ? skillBitInput.manual_order
+            : getNextSkillBitOrder(skillBitInput.outcome_id);
+        preparedData = {
+          ...skillBitInput,
+          manual_order: manualOrder,
+        } as unknown as EntityInput<Name>;
+      }
+
+      const id = preparedData.id ?? createId(config.prefix);
+      const entity = config.factory({ ...preparedData, id }) as EntityRecord<Name>;
 
       const current = state[config.key] as EntityRecord<Name>[];
       state = {
@@ -349,6 +541,11 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
 
       if (entityName === "LearningOutcome") {
         state.outcomes = sortByOrder(state.outcomes);
+      }
+
+      if (entityName === "SkillBit") {
+        state.skillBits = sortSkillBits(state.skillBits);
+        normalizeSkillBitOrders((entity as SkillBit).outcome_id);
       }
 
       persist();
@@ -365,8 +562,9 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
         throw new Error(`${entityName} with id "${id}" not found`);
       }
 
+      const previousRecord = collection[index];
       const updated: EntityRecord<Name> = {
-        ...collection[index],
+        ...previousRecord,
         ...data,
         updated_at: now(),
       } as EntityRecord<Name>;
@@ -387,6 +585,14 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
         state.outcomes = sortByOrder(state.outcomes);
       }
 
+      if (entityName === "SkillBit") {
+        state.skillBits = sortSkillBits(state.skillBits);
+        normalizeSkillBitOrders((updated as SkillBit).outcome_id);
+        if ((previousRecord as SkillBit).outcome_id !== (updated as SkillBit).outcome_id) {
+          normalizeSkillBitOrders((previousRecord as SkillBit).outcome_id);
+        }
+      }
+
       persist();
       notify();
 
@@ -399,8 +605,10 @@ function createEntityApi<Name extends EntityName>(entityName: Name) {
         cascadeDeleteSubject(id);
       } else if (entityName === "Topic") {
         cascadeDeleteTopic(id);
-      } else {
+      } else if (entityName === "LearningOutcome") {
         cascadeDeleteOutcome(id);
+      } else {
+        deleteSkillBit(id);
       }
 
       persist();
@@ -413,32 +621,42 @@ function cascadeDeleteSubject(subjectId: string) {
   const remainingSubjects = state.subjects.filter((subject) => subject.id !== subjectId);
   const topicIdsToDelete = state.topics.filter((topic) => topic.subject_id === subjectId).map((t) => t.id);
   const remainingTopics = state.topics.filter((topic) => topic.subject_id !== subjectId);
+  const outcomeIdsToDelete = state.outcomes
+    .filter((outcome) => topicIdsToDelete.includes(outcome.topic_id))
+    .map((outcome) => outcome.id);
   const remainingOutcomes = state.outcomes.filter((outcome) => !topicIdsToDelete.includes(outcome.topic_id));
+  const remainingSkillBits = state.skillBits.filter((skill) => !outcomeIdsToDelete.includes(skill.outcome_id));
 
   state = {
     subjects: remainingSubjects,
     topics: remainingTopics,
     outcomes: remainingOutcomes,
+    skillBits: remainingSkillBits,
   };
 }
 
 function cascadeDeleteTopic(topicId: string) {
   const remainingTopics = state.topics.filter((topic) => topic.id !== topicId);
+  const outcomeIdsToDelete = state.outcomes.filter((outcome) => outcome.topic_id === topicId).map((outcome) => outcome.id);
   const remainingOutcomes = state.outcomes.filter((outcome) => outcome.topic_id !== topicId);
+  const remainingSkillBits = state.skillBits.filter((skill) => !outcomeIdsToDelete.includes(skill.outcome_id));
 
   state = {
     ...state,
     topics: remainingTopics,
     outcomes: remainingOutcomes,
+    skillBits: remainingSkillBits,
   };
 }
 
 function cascadeDeleteOutcome(outcomeId: string) {
   const remainingOutcomes = state.outcomes.filter((outcome) => outcome.id !== outcomeId);
+  const remainingSkillBits = state.skillBits.filter((skill) => skill.outcome_id !== outcomeId);
 
   state = {
     ...state,
     outcomes: remainingOutcomes,
+    skillBits: remainingSkillBits,
   };
 
   state.outcomes = state.outcomes.map((outcome) => ({
@@ -466,15 +684,29 @@ type RawDataset = {
     expects?: string[];
     consists_of?: string[];
   }>;
+  skill_bits?: Array<{
+    text?: string;
+    label?: string;
+    belongs_to?: string[];
+    outcome?: string[];
+    order?: number;
+  }>;
+  sub_skills?: Array<{
+    text?: string;
+    label?: string;
+    belongs_to?: string[];
+    outcome?: string[];
+    order?: number;
+  }>;
 };
 
 type SerializedSubject = {
   id: string;
+  title?: string | null;
   name?: string | null;
   name_et?: string | null;
   description?: string | null;
   uri?: string | null;
-  code?: string | null;
   status?: "draft" | "published" | null;
 };
 
@@ -502,6 +734,13 @@ type SerializedOutcome = {
   consists_of?: string[] | null;
 };
 
+type SerializedSkillBit = {
+  id: string;
+  label?: string | null;
+  outcome_id?: string | null;
+  manual_order?: number | null;
+};
+
 async function fetchSplitDataset(): Promise<CurriculumState | null> {
   try {
     const [subjectsRes, topicsRes, outcomesRes] = await Promise.all([
@@ -509,6 +748,9 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
       fetch(resolvePublicAsset("data/topics.json"), { cache: "no-store" }),
       fetch(resolvePublicAsset("data/outcomes.json"), { cache: "no-store" }),
     ]);
+    const skillBitsRes = await fetch(resolvePublicAsset("data/skillbits.json"), {
+      cache: "no-store",
+    }).catch(() => null);
 
     if (!subjectsRes.ok || !topicsRes.ok || !outcomesRes.ok) {
       return null;
@@ -519,15 +761,17 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
       topicsRes.json(),
       outcomesRes.json(),
     ])) as [SerializedSubject[], SerializedTopic[], SerializedOutcome[]];
+    let skillBitsRaw: SerializedSkillBit[] = [];
+    if (skillBitsRes?.ok) {
+      skillBitsRaw = (await skillBitsRes.json()) as SerializedSkillBit[];
+    }
 
     const subjectRecords = subjectsRaw.map((record, index) =>
       makeSubject({
         id: record.id,
-        name: record.name ?? `Õppeaine ${index + 1}`,
-        name_et: record.name_et ?? record.name ?? `Õppeaine ${index + 1}`,
+        title: record.title ?? record.name ?? record.name_et ?? `Õppeaine ${index + 1}`,
         description: record.description ?? undefined,
         uri: record.uri ?? undefined,
-        code: record.code ?? undefined,
         status: (record.status as Subject["status"]) ?? "draft",
       }),
     );
@@ -537,8 +781,7 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
       subjectRecords.push(
         makeSubject({
           id: fallbackSubjectId,
-          name: "Määramata",
-          name_et: "Määramata",
+          title: "Määramata",
           status: "draft",
         }),
       );
@@ -563,11 +806,12 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
     });
 
     const topicSet = new Set(topicRecords.map((topic) => topic.id));
+    const outcomeLookup = new Map<string, LearningOutcome>();
     const outcomeRecords = outcomesRaw.map((record, index) => {
       const topicId = topicSet.has(record.topic_id ?? "")
         ? (record.topic_id as string)
         : topicRecords[0]?.id ?? fallbackSubjectId;
-      return makeOutcome({
+      const outcomeRecord = makeOutcome({
         id: record.id,
         text: record.text ?? undefined,
         text_et: record.text_et ?? record.text ?? undefined,
@@ -579,7 +823,33 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
         expects: Array.isArray(record.expects) ? record.expects.slice() : [],
         consists_of: Array.isArray(record.consists_of) ? record.consists_of.slice() : [],
       });
+      outcomeLookup.set(outcomeRecord.id, outcomeRecord);
+      if (record.text) {
+        outcomeLookup.set(record.text, outcomeRecord);
+      }
+      if (record.uri) {
+        outcomeLookup.set(record.uri, outcomeRecord);
+      }
+      return outcomeRecord;
     });
+
+    const skillBitRecords = skillBitsRaw
+      .map((record, index) => {
+        const parentOutcome =
+          record.outcome_id && outcomeLookup.has(record.outcome_id)
+            ? (outcomeLookup.get(record.outcome_id) as LearningOutcome)
+            : null;
+        if (!parentOutcome) {
+          return null;
+        }
+        return makeSkillBit({
+          id: record.id,
+          label: record.label ?? `Skill-bit ${index + 1}`,
+          outcome_id: parentOutcome.id,
+          manual_order: record.manual_order ?? index + 1,
+        });
+      })
+      .filter((skill): skill is SkillBit => Boolean(skill));
 
     const validOutcome = new Set(outcomeRecords.map((outcome) => outcome.id));
     outcomeRecords.forEach((outcome) => {
@@ -591,6 +861,7 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
       subjects: subjectRecords,
       topics: sortByOrder(topicRecords),
       outcomes: sortByOrder(outcomeRecords),
+      skillBits: sortSkillBits(skillBitRecords),
     };
   } catch (error) {
     console.warn("[curriculum] Failed to load split dataset", error);
@@ -640,8 +911,7 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
     const id = ensureUniqueId("subject", name, index, idUsage);
     const subject = makeSubject({
       id,
-      name,
-      name_et: name,
+      title: name,
       status: "published",
     });
     subjectRecords.push(subject);
@@ -683,8 +953,7 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
   if (!subjectRecords.length) {
     const fallbackSubject = makeSubject({
       id: fallbackSubjectId,
-      name: "Määramata",
-      name_et: "Määramata",
+      title: "Määramata",
       status: "draft",
     });
     subjectRecords.push(fallbackSubject);
@@ -692,6 +961,7 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
   }
 
   const outcomeUsage = new Map<string, number>();
+  const skillBitUsage = new Map<string, number>();
   const outcomeRecords: LearningOutcome[] = [];
   const outcomeLookup = new Map<string, LearningOutcome>();
   const awaitingRelations: Array<{
@@ -753,6 +1023,7 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
     });
 
     outcomeRecords.push(record);
+    outcomeLookup.set(record.id, record);
     if (outcome.text) {
       outcomeLookup.set(outcome.text, record);
     }
@@ -776,10 +1047,38 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
       .filter((value): value is string => Boolean(value));
   });
 
+  const skillBitRecords: SkillBit[] = [];
+  const combinedSkillBits = raw.skill_bits ?? raw.sub_skills;
+  combinedSkillBits?.forEach((skill, index) => {
+    const label = skill.text?.trim() || skill.label?.trim() || `Skill-bit ${index + 1}`;
+    const outcomeRef = skill.belongs_to?.[0] ?? skill.outcome?.[0];
+    if (!outcomeRef || typeof outcomeRef !== "string") {
+      return;
+    }
+    const normalizedOutcomeRef = outcomeRef.trim();
+    const parentOutcome =
+      outcomeLookup.get(normalizedOutcomeRef) ??
+      outcomeLookup.get(outcomeRef) ??
+      outcomeRecords.find((record) => record.uri === outcomeRef);
+    if (!parentOutcome) {
+      return;
+    }
+    const id = ensureUniqueId("skill", label, index, skillBitUsage);
+    skillBitRecords.push(
+      makeSkillBit({
+        id,
+        label,
+        outcome_id: parentOutcome.id,
+        manual_order: typeof skill.order === "number" ? skill.order : skillBitRecords.length + 1,
+      }),
+    );
+  });
+
   return {
     subjects: subjectRecords,
     topics: sortByOrder(topicRecords),
     outcomes: sortByOrder(outcomeRecords),
+    skillBits: sortSkillBits(skillBitRecords),
   };
 }
 
@@ -808,6 +1107,7 @@ async function loadDataset(force = false) {
       `${state.subjects.length} subjects`,
       `${state.topics.length} topics`,
       `${state.outcomes.length} outcomes`,
+      `${state.skillBits.length} skill-bits`,
     );
     persist();
     notify();
@@ -825,6 +1125,33 @@ export const curriculum = {
     Subject: createEntityApi("Subject"),
     Topic: createEntityApi("Topic"),
     LearningOutcome: createEntityApi("LearningOutcome"),
+    SkillBit: createEntityApi("SkillBit"),
+  },
+  skillBits: {
+    async listForOutcome(outcomeId: string) {
+      await ensureDatasetReady();
+      const items = state.skillBits.filter((skill) => skill.outcome_id === outcomeId);
+      return clone(sortByOrder(items));
+    },
+    async reorder(skillId: string, direction: "up" | "down") {
+      await ensureDatasetReady();
+      const delta = direction === "up" ? -1 : 1;
+      const updated = moveSkillBit(skillId, delta);
+      if (updated) {
+        persist();
+        notify();
+        return clone(updated);
+      }
+      return null;
+    },
+    async countByOutcome() {
+      await ensureDatasetReady();
+      const counts: Record<string, number> = {};
+      state.skillBits.forEach((skill) => {
+        counts[skill.outcome_id] = (counts[skill.outcome_id] ?? 0) + 1;
+      });
+      return clone(counts);
+    },
   },
   async load(force = false) {
     try {

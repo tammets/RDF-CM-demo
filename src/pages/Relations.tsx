@@ -65,7 +65,7 @@ export default function Relations() {
 
   const getSubjectName = (subjectId: string) => {
     const subject = subjects.find((item) => item.id === subjectId);
-    return subject ? subject.name : "Unknown subject";
+    return subject ? subject.title : "Unknown subject";
   };
 
   const getSubjectNameForOutcome = (outcome: LearningOutcome | null) => {
@@ -230,7 +230,7 @@ export default function Relations() {
                       <option value="all">All subjects</option>
                       {subjects.map((subject) => (
                         <option key={subject.id} value={subject.id}>
-                          {subject.name}
+                          {subject.title}
                         </option>
                       ))}
                     </select>

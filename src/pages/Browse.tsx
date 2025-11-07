@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
+import { curriculum, type Subject, type Topic, type LearningOutcome, type SkillBit } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronDown, BookOpen, BookMarked, Target, ExternalLink } from "lucide-react";
+import { SkillBitManagerDialog } from "@/components/skillbits/SkillBitManagerDialog";
 
 type ExpandedState = Record<string, boolean>;
 
@@ -12,6 +14,7 @@ export default function Browse() {
   const navigate = useNavigate();
   const [expandedSubjects, setExpandedSubjects] = useState<ExpandedState>({});
   const [expandedTopics, setExpandedTopics] = useState<ExpandedState>({});
+  const [skillBitOutcome, setSkillBitOutcome] = useState<LearningOutcome | null>(null);
 
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects"],
@@ -27,6 +30,32 @@ export default function Browse() {
     queryKey: ["outcomes"],
     queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
+
+  const { data: skillBits = [] } = useQuery<SkillBit[]>({
+    queryKey: ["skillbits"],
+    queryFn: () => curriculum.entities.SkillBit.list(),
+  });
+
+  const skillBitsByOutcome = useMemo(() => {
+    const map: Record<string, SkillBit[]> = {};
+    skillBits.forEach((skill) => {
+      if (!map[skill.outcome_id]) {
+        map[skill.outcome_id] = [];
+      }
+      map[skill.outcome_id].push(skill);
+    });
+    Object.values(map).forEach((list) =>
+      list.sort((a, b) => {
+        const aOrder = a.manual_order ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.manual_order ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.created_at - a.created_at;
+      }),
+    );
+    return map;
+  }, [skillBits]);
 
   const toggleSubject = (subjectId: string) => {
     setExpandedSubjects((prev) => ({
@@ -84,14 +113,9 @@ export default function Browse() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-slate-900">{subject.name}</h3>
-                          {subject.code && (
-                            <Badge variant="outline">{subject.code}</Badge>
-                          )}
+                          <h3 className="text-lg font-semibold text-slate-900">{subject.title}</h3>
                         </div>
-                        {subject.name_et && (
-                          <p className="text-sm text-slate-500 mt-1">{subject.name_et}</p>
-                        )}
+                        <p className="text-xs text-slate-400 mt-1">ID: {subject.id}</p>
                         {subject.description && (
                           <p className="text-sm text-slate-600 mt-2">{subject.description}</p>
                         )}
@@ -155,52 +179,86 @@ export default function Browse() {
                                 <div className="border-t border-indigo-100 bg-purple-50/30 p-4">
                                   {topicOutcomes.length > 0 ? (
                                     <div className="space-y-2">
-                                      {topicOutcomes.map((outcome) => (
-                                        <div
-                                          key={outcome.id}
-                                          role="button"
-                                          tabIndex={0}
-                                          className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer transition-all hover:border-purple-400 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-                                          onClick={() => openRelationsForOutcome(outcome.id)}
-                                          onKeyDown={(event) => {
-                                            if (event.key === "Enter" || event.key === " ") {
-                                              event.preventDefault();
-                                              openRelationsForOutcome(outcome.id);
-                                            }
-                                          }}
-                                        >
-                                          <div className="flex items-start gap-3">
-                                            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
-                                              <Target className="w-3 h-3 text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                              <div className="flex items-start justify-between gap-3">
-                                                <p className="text-sm text-slate-900">{outcome.text}</p>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                  <Badge variant="secondary" className="text-xs">
-                                                    {outcome.school_level}
-                                                  </Badge>
+                                      {topicOutcomes.map((outcome) => {
+                                        const skills = skillBitsByOutcome[outcome.id] ?? [];
+                                        return (
+                                          <div
+                                            key={outcome.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer transition-all hover:border-purple-400 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+                                            onClick={() => openRelationsForOutcome(outcome.id)}
+                                            onKeyDown={(event) => {
+                                              if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                openRelationsForOutcome(outcome.id);
+                                              }
+                                            }}
+                                          >
+                                            <div className="flex items-start gap-3">
+                                              <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
+                                                <Target className="w-3 h-3 text-white" />
+                                              </div>
+                                              <div className="flex-1">
+                                                <div className="flex items-start justify-between gap-3">
+                                                  <p className="text-sm text-slate-900">{outcome.text}</p>
+                                                  <div className="flex items-center gap-2 shrink-0">
+                                                    <Badge variant="secondary" className="text-xs">
+                                                      {outcome.school_level}
+                                                    </Badge>
+                                                  </div>
+                                                </div>
+                                                {outcome.text_et && (
+                                                  <p className="text-xs text-slate-500 mt-1">{outcome.text_et}</p>
+                                                )}
+                                                {outcome.uri && (
+                                                  <a 
+                                                    href={outcome.uri} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-2"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  >
+                                                    <ExternalLink className="w-3 h-3" />
+                                                    View RDF URI
+                                                  </a>
+                                                )}
+                                                {skills.length > 0 ? (
+                                                  <div className="mt-3 rounded-md border border-purple-100 bg-purple-50/50 p-3">
+                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                      Skill-bits
+                                                    </p>
+                                                    <ul className="mt-2 space-y-1">
+                                                      {skills.map((skill) => (
+                                                        <li key={skill.id} className="flex items-center gap-2 text-xs text-slate-700">
+                                                          <span className="font-mono text-[11px] text-slate-400">
+                                                            {skill.manual_order ?? "•"}.
+                                                          </span>
+                                                          <span className="flex-1">{skill.label}</span>
+                                                        </li>
+                                                      ))}
+                                                    </ul>
+                                                  </div>
+                                                ) : (
+                                                  <p className="mt-3 text-xs text-slate-500">No skill-bits yet.</p>
+                                                )}
+                                                <div className="mt-2">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={(event) => {
+                                                      event.stopPropagation();
+                                                      setSkillBitOutcome(outcome);
+                                                    }}
+                                                  >
+                                                    Manage skill-bits
+                                                  </Button>
                                                 </div>
                                               </div>
-                                              {outcome.text_et && (
-                                                <p className="text-xs text-slate-500 mt-1">{outcome.text_et}</p>
-                                              )}
-                                              {outcome.uri && (
-                                                <a 
-                                                  href={outcome.uri} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer"
-                                                  className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-2"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                >
-                                                  <ExternalLink className="w-3 h-3" />
-                                                  View RDF URI
-                                                </a>
-                                              )}
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   ) : (
                                     <p className="text-center text-slate-500 text-sm py-4">No learning outcomes yet</p>
@@ -229,6 +287,15 @@ export default function Browse() {
           )}
         </div>
       </div>
+      <SkillBitManagerDialog
+        outcome={skillBitOutcome}
+        open={Boolean(skillBitOutcome)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSkillBitOutcome(null);
+          }
+        }}
+      />
     </div>
   );
 }

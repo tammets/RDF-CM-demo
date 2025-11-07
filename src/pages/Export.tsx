@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { curriculum, type Subject, type Topic, type LearningOutcome } from "@/api/curriculumClient";
+import { useMemo, useState } from "react";
+import { curriculum, type Subject, type Topic, type LearningOutcome, type SkillBit } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,32 @@ export default function Export() {
     queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
+  const { data: skillBits = [] } = useQuery<SkillBit[]>({
+    queryKey: ["skillbits"],
+    queryFn: () => curriculum.entities.SkillBit.list(),
+  });
+
+  const skillBitsByOutcome = useMemo(() => {
+    const map: Record<string, SkillBit[]> = {};
+    skillBits.forEach((skill) => {
+      if (!map[skill.outcome_id]) {
+        map[skill.outcome_id] = [];
+      }
+      map[skill.outcome_id].push(skill);
+    });
+    Object.values(map).forEach((list) =>
+      list.sort((a, b) => {
+        const aOrder = a.manual_order ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.manual_order ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.created_at - a.created_at;
+      }),
+    );
+    return map;
+  }, [skillBits]);
+
   const rdfSchema = `@prefix eduschema: <https://oppekava.edu.ee/schema/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -60,6 +86,11 @@ eduschema:LearningOutcome a owl:Class ;
     rdfs:label "Õpiväljund"@et ;
     rdfs:label "Learning Outcome"@en ;
     rdfs:comment "Konkreetne õpiväljund teema raames"@et .
+
+eduschema:SkillBit a owl:Class ;
+    rdfs:label "Osaoskus"@et ;
+    rdfs:label "Skill-bit"@en ;
+    rdfs:comment "Konkreetne oskus, mis kuulub õpiväljundi alla"@et .
 
 eduschema:CurriculumExport a owl:Class ;
     rdfs:label "Õppekava eksport"@et ;
@@ -89,6 +120,16 @@ eduschema:consistsOf a owl:ObjectProperty ;
     rdfs:domain eduschema:LearningOutcome ;
     rdfs:range eduschema:LearningOutcome .
 
+eduschema:hasSkillBit a owl:ObjectProperty ;
+    rdfs:label "sisaldab osaoskust"@et ;
+    rdfs:domain eduschema:LearningOutcome ;
+    rdfs:range eduschema:SkillBit .
+
+eduschema:belongsToLearningOutcome a owl:ObjectProperty ;
+    rdfs:label "kuulub õpiväljundile"@et ;
+    rdfs:domain eduschema:SkillBit ;
+    rdfs:range eduschema:LearningOutcome .
+
 eduschema:schoolLevel a owl:DatatypeProperty ;
     rdfs:label "kooliaste"@et ;
     rdfs:domain eduschema:LearningOutcome ;
@@ -99,10 +140,10 @@ eduschema:gradeRange a owl:DatatypeProperty ;
     rdfs:domain eduschema:LearningOutcome ;
     rdfs:range xsd:string .
 
-eduschema:code a owl:DatatypeProperty ;
-    rdfs:label "kood"@et ;
-    rdfs:domain eduschema:Subject ;
-    rdfs:range xsd:string .
+eduschema:manualOrder a owl:DatatypeProperty ;
+    rdfs:label "käsitsi järjekord"@et ;
+    rdfs:domain eduschema:SkillBit ;
+    rdfs:range xsd:integer .
 
 eduschema:status a owl:DatatypeProperty ;
     rdfs:label "olek"@et ;
@@ -128,6 +169,10 @@ eduschema:totalOutcomes a owl:DatatypeProperty ;
     rdfs:label "õpiväljundite arv"@et ;
     rdfs:range xsd:integer .
 
+eduschema:totalSkillBits a owl:DatatypeProperty ;
+    rdfs:label "osaoskuste arv"@et ;
+    rdfs:range xsd:integer .
+
 eduschema:totalItems a owl:DatatypeProperty ;
     rdfs:label "kirjete arv kokku"@et ;
     rdfs:range xsd:integer .`;
@@ -144,7 +189,10 @@ eduschema:totalItems a owl:DatatypeProperty ;
         "hasOutcome": "eduschema:hasOutcome",
         "schoolLevel": "eduschema:schoolLevel",
         "expects": "eduschema:expects",
-        "consistsOf": "eduschema:consistsOf"
+        "consistsOf": "eduschema:consistsOf",
+        "hasSkillBit": "eduschema:hasSkillBit",
+        "belongsToLearningOutcome": "eduschema:belongsToLearningOutcome",
+        "manualOrder": "eduschema:manualOrder"
       },
       "@id": "https://oppekava.edu.ee/export",
       "@type": "eduschema:CurriculumExport",
@@ -153,7 +201,8 @@ eduschema:totalItems a owl:DatatypeProperty ;
       "totalSubjects": subjects.length,
       "totalTopics": topics.length,
       "totalOutcomes": outcomes.length,
-      "totalItems": subjects.length + topics.length + outcomes.length,
+      "totalSkillBits": skillBits.length,
+      "totalItems": subjects.length + topics.length + outcomes.length + skillBits.length,
       "@graph": [],
     };
 
@@ -161,10 +210,8 @@ eduschema:totalItems a owl:DatatypeProperty ;
       const subjectNode: Record<string, unknown> & { hasTopic: Record<string, unknown>[] } = {
         "@id": subject.uri || `https://oppekava.edu.ee/subjects/${subject.id}`,
         "@type": "eduschema:Subject",
-        "name": subject.name,
-        "name_et": subject.name_et,
+        "name": subject.title,
         "description": subject.description,
-        "code": subject.code,
         "status": subject.status,
         "hasTopic": [],
       };
@@ -201,6 +248,16 @@ eduschema:totalItems a owl:DatatypeProperty ;
           if (outcome.consists_of && outcome.consists_of.length > 0) {
             (outcomeNode as { consistsOf: string[] }).consistsOf = outcome.consists_of;
           }
+          const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
+          if (outcomeSkills.length > 0) {
+            (outcomeNode as { hasSkillBit: Record<string, unknown>[] }).hasSkillBit = outcomeSkills.map((skill) => ({
+              "@id": `https://oppekava.edu.ee/skillbits/${skill.id}`,
+              "@type": "eduschema:SkillBit",
+              "name": skill.label,
+              "manualOrder": skill.manual_order,
+              "belongsToLearningOutcome": outcomeNode["@id"],
+            }));
+          }
 
           topicNode.hasOutcome.push(outcomeNode);
         });
@@ -225,24 +282,17 @@ eduschema:totalItems a owl:DatatypeProperty ;
     eduschema:version "1.0" ;
     eduschema:totalSubjects ${subjects.length} ;
     eduschema:totalTopics ${topics.length} ;
-    eduschema:totalOutcomes ${outcomes.length} .
+    eduschema:totalOutcomes ${outcomes.length} ;
+    eduschema:totalSkillBits ${skillBits.length} .
 
 `;
 
     subjects.forEach(subject => {
       const subjectUri = subject.uri || `https://oppekava.edu.ee/subjects/${subject.id}`;
-      turtle += `<${subjectUri}> a eduschema:Subject ;\n    rdfs:label "${subject.name}"@en`;
-      
-      if (subject.name_et) {
-        turtle += `,\n        "${subject.name_et}"@et`;
-      }
-      turtle += ` ;\n`;
+      turtle += `<${subjectUri}> a eduschema:Subject ;\n    rdfs:label "${subject.title}"@en ;\n`;
 
       if (subject.description) {
         turtle += `    rdfs:comment "${subject.description}" ;\n`;
-      }
-      if (subject.code) {
-        turtle += `    eduschema:code "${subject.code}" ;\n`;
       }
       
       const subjectTopics = topics.filter(t => t.subject_id === subject.id);
@@ -288,6 +338,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
 
         topicOutcomes.forEach(outcome => {
           const outcomeUri = outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`;
+          const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
           turtle += `<${outcomeUri}> a eduschema:LearningOutcome ;\n    rdfs:label "${outcome.text}"@en`;
           
           if (outcome.text_et) {
@@ -304,9 +355,30 @@ eduschema:totalItems a owl:DatatypeProperty ;
           if (outcome.consists_of && outcome.consists_of.length > 0) {
             turtle += `    eduschema:consistsOf "${outcome.consists_of.join('", "')}" ;\n`;
           }
+          if (outcomeSkills.length > 0) {
+            outcomeSkills.forEach((skill, idx) => {
+              const skillUri = `https://oppekava.edu.ee/skillbits/${skill.id}`;
+              turtle += `    eduschema:hasSkillBit <${skillUri}>`;
+              turtle += idx === outcomeSkills.length - 1 ? ` ;\n` : ` ,\n`;
+            });
+          }
           turtle += `    eduschema:status "${outcome.status}" .\n\n`;
         });
       });
+    });
+
+    const outcomeUriMap = new Map(
+      outcomes.map((outcome) => [outcome.id, outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`]),
+    );
+
+    skillBits.forEach((skill) => {
+      const skillUri = `https://oppekava.edu.ee/skillbits/${skill.id}`;
+      const parentOutcomeUri = outcomeUriMap.get(skill.outcome_id) || `https://oppekava.edu.ee/outcomes/${skill.outcome_id}`;
+      turtle += `<${skillUri}> a eduschema:SkillBit ;\n    rdfs:label "${skill.label}"@en ;\n`;
+      if (typeof skill.manual_order === "number") {
+        turtle += `    eduschema:manualOrder ${skill.manual_order} ;\n`;
+      }
+      turtle += `    eduschema:belongsToLearningOutcome <${parentOutcomeUri}> .\n\n`;
     });
 
     return turtle;
@@ -335,6 +407,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
               subjects,
               topics,
               outcomes,
+              skillBits,
             },
             null,
             2,
@@ -382,7 +455,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
           <p className="text-slate-600">Export curriculum data in machine-readable formats</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 min-h-[80vh]">
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -424,7 +497,8 @@ eduschema:totalItems a owl:DatatypeProperty ;
                   <Textarea
                     value={truncatedPreview}
                     readOnly
-                    className="font-mono text-xs h-[500px] bg-slate-900 text-green-400 border-slate-700"
+                    className="font-mono text-xs h-[640px] bg-transparent text-green-400 border-slate-700"
+                    style={{ backgroundColor: "#0f172a" }}
                   />
                   {previewIsTruncated ? (
                     <p className="mt-2 text-xs text-slate-500">
@@ -455,7 +529,8 @@ eduschema:totalItems a owl:DatatypeProperty ;
                           <Textarea
                             value={rdfSchema}
                             readOnly
-                            className="font-mono text-xs h-[500px] bg-slate-900 text-green-400 border-slate-700"
+                            className="font-mono text-xs h-[640px] bg-transparent text-green-400 border-slate-700"
+                            style={{ backgroundColor: "#0f172a" }}
                           />
                           <Button
                             variant="outline"

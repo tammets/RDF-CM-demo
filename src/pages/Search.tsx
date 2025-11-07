@@ -68,9 +68,9 @@ export default function Search() {
     queryFn: () => curriculum.entities.LearningOutcome.list(),
   });
 
-  const getSubjectName = (subjectId: string) => {
+  const getSubjectTitle = (subjectId: string) => {
     const subject = subjects.find((item) => item.id === subjectId);
-    return subject ? subject.name : "Unknown";
+    return subject ? subject.title : "Unknown";
   };
 
   const getTopicName = (topicId: string) => {
@@ -88,16 +88,14 @@ export default function Search() {
     if (filterType === "all" || filterType === "subjects") {
       subjects.forEach((subject) => {
         if (
-          subject.name?.toLowerCase().includes(query) ||
-          subject.name_et?.toLowerCase().includes(query) ||
-          subject.description?.toLowerCase().includes(query) ||
-          subject.code?.toLowerCase().includes(query)
+          subject.title?.toLowerCase().includes(query) ||
+          subject.description?.toLowerCase().includes(query)
         ) {
           matches.push({
             type: "subject",
             id: subject.id,
-            title: subject.name,
-            title_et: subject.name_et,
+            title: subject.title,
+            title_et: subject.title,
             description: subject.description,
             status: subject.status,
             uri: subject.uri,
@@ -122,7 +120,7 @@ export default function Search() {
             description: topic.description,
             status: topic.status,
             uri: topic.uri,
-            subject_name: getSubjectName(topic.subject_id),
+            subject_name: getSubjectTitle(topic.subject_id),
           });
         }
       });
