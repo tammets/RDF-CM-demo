@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { buildTopicTreeBySubject, type TopicTreeNode } from "@/lib/topicHierarchy";
 
 type ExportFormat = "json-ld" | "turtle" | "json";
-const PREVIEW_LINE_LIMIT = 20;
+const PREVIEW_LINE_LIMIT = 100;
 
 export default function Export() {
   const [copied, setCopied] = useState(false);
@@ -59,6 +60,8 @@ export default function Export() {
     return map;
   }, [skillBits]);
 
+  const topicTreeBySubject = useMemo(() => buildTopicTreeBySubject(topics), [topics]);
+
   const rdfSchema = `@prefix eduschema: <https://oppekava.edu.ee/schema/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -101,6 +104,18 @@ eduschema:CurriculumExport a owl:Class ;
 eduschema:hasTopic a owl:ObjectProperty ;
     rdfs:label "sisaldab teemat"@et ;
     rdfs:domain eduschema:Subject ;
+    rdfs:range eduschema:Topic .
+
+eduschema:hasSubtopic a owl:ObjectProperty ;
+    rdfs:label "sisaldab alamteemat"@et ;
+    rdfs:comment "Viitab teema alluvatele alamteemadele"@et ;
+    rdfs:domain eduschema:Topic ;
+    rdfs:range eduschema:Topic .
+
+eduschema:parentTopic a owl:ObjectProperty ;
+    rdfs:label "kuulub teemale"@et ;
+    rdfs:comment "Viitab alamteema ülemteemale"@et ;
+    rdfs:domain eduschema:Topic ;
     rdfs:range eduschema:Topic .
 
 eduschema:hasOutcome a owl:ObjectProperty ;
@@ -186,6 +201,8 @@ eduschema:totalItems a owl:DatatypeProperty ;
         "name": "rdfs:label",
         "description": "rdfs:comment",
         "hasTopic": "eduschema:hasTopic",
+        "hasSubtopic": "eduschema:hasSubtopic",
+        "parentTopic": "eduschema:parentTopic",
         "hasOutcome": "eduschema:hasOutcome",
         "schoolLevel": "eduschema:schoolLevel",
         "expects": "eduschema:expects",
@@ -206,6 +223,68 @@ eduschema:totalItems a owl:DatatypeProperty ;
       "@graph": [],
     };
 
+    const buildTopicNode = (node: TopicTreeNode, parentId?: string) => {
+      const topic = node.topic;
+      const topicId = topic.uri || `https://oppekava.edu.ee/topics/${topic.id}`;
+      const topicNode: Record<string, unknown> & {
+        hasOutcome: Record<string, unknown>[];
+        hasSubtopic?: Record<string, unknown>[];
+        parentTopic?: string;
+      } = {
+        "@id": topicId,
+        "@type": "eduschema:Topic",
+        "name": topic.name,
+        "name_et": topic.name_et,
+        "description": topic.description,
+        "order_index": topic.order_index,
+        "status": topic.status,
+        "hasOutcome": [],
+      };
+
+      if (parentId) {
+        topicNode.parentTopic = parentId;
+      }
+
+      const topicOutcomes = outcomes.filter((outcome) => outcome.topic_id === topic.id);
+      topicOutcomes.forEach((outcome) => {
+        const outcomeNode: Record<string, unknown> = {
+          "@id": outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`,
+          "@type": "eduschema:LearningOutcome",
+          "text": outcome.text,
+          "text_et": outcome.text_et,
+          "schoolLevel": outcome.school_level,
+          "gradeRange": outcome.grade_range,
+          "order_index": outcome.order_index,
+          "status": outcome.status,
+        };
+
+        if (outcome.expects && outcome.expects.length > 0) {
+          (outcomeNode as { expects: string[] }).expects = outcome.expects;
+        }
+        if (outcome.consists_of && outcome.consists_of.length > 0) {
+          (outcomeNode as { consistsOf: string[] }).consistsOf = outcome.consists_of;
+        }
+        const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
+        if (outcomeSkills.length > 0) {
+          (outcomeNode as { hasSkillBit: Record<string, unknown>[] }).hasSkillBit = outcomeSkills.map((skill) => ({
+            "@id": `https://oppekava.edu.ee/skillbits/${skill.id}`,
+            "@type": "eduschema:SkillBit",
+            "name": skill.label,
+            "manualOrder": skill.manual_order,
+            "belongsToLearningOutcome": outcomeNode["@id"],
+          }));
+        }
+
+        topicNode.hasOutcome.push(outcomeNode);
+      });
+
+      if (node.children.length > 0) {
+        topicNode.hasSubtopic = node.children.map((child) => buildTopicNode(child, topicId));
+      }
+
+      return topicNode;
+    };
+
     subjects.forEach((subject) => {
       const subjectNode: Record<string, unknown> & { hasTopic: Record<string, unknown>[] } = {
         "@id": subject.uri || `https://oppekava.edu.ee/subjects/${subject.id}`,
@@ -216,53 +295,9 @@ eduschema:totalItems a owl:DatatypeProperty ;
         "hasTopic": [],
       };
 
-      const subjectTopics = topics.filter((topic) => topic.subject_id === subject.id);
-      subjectTopics.forEach((topic) => {
-        const topicNode: Record<string, unknown> & { hasOutcome: Record<string, unknown>[] } = {
-          "@id": topic.uri || `https://oppekava.edu.ee/topics/${topic.id}`,
-          "@type": "eduschema:Topic",
-          "name": topic.name,
-          "name_et": topic.name_et,
-          "description": topic.description,
-          "order_index": topic.order_index,
-          "status": topic.status,
-          "hasOutcome": [],
-        };
-
-        const topicOutcomes = outcomes.filter((outcome) => outcome.topic_id === topic.id);
-        topicOutcomes.forEach((outcome) => {
-          const outcomeNode: Record<string, unknown> = {
-            "@id": outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`,
-            "@type": "eduschema:LearningOutcome",
-            "text": outcome.text,
-            "text_et": outcome.text_et,
-            "schoolLevel": outcome.school_level,
-            "gradeRange": outcome.grade_range,
-            "order_index": outcome.order_index,
-            "status": outcome.status
-          };
-
-          if (outcome.expects && outcome.expects.length > 0) {
-            (outcomeNode as { expects: string[] }).expects = outcome.expects;
-          }
-          if (outcome.consists_of && outcome.consists_of.length > 0) {
-            (outcomeNode as { consistsOf: string[] }).consistsOf = outcome.consists_of;
-          }
-          const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
-          if (outcomeSkills.length > 0) {
-            (outcomeNode as { hasSkillBit: Record<string, unknown>[] }).hasSkillBit = outcomeSkills.map((skill) => ({
-              "@id": `https://oppekava.edu.ee/skillbits/${skill.id}`,
-              "@type": "eduschema:SkillBit",
-              "name": skill.label,
-              "manualOrder": skill.manual_order,
-              "belongsToLearningOutcome": outcomeNode["@id"],
-            }));
-          }
-
-          topicNode.hasOutcome.push(outcomeNode);
-        });
-
-        subjectNode.hasTopic.push(topicNode);
+      const subjectTopics = topicTreeBySubject[subject.id] ?? [];
+      subjectTopics.forEach((topicNode) => {
+        subjectNode.hasTopic.push(buildTopicNode(topicNode));
       });
 
       context["@graph"].push(subjectNode);
@@ -287,83 +322,101 @@ eduschema:totalItems a owl:DatatypeProperty ;
 
 `;
 
-    subjects.forEach(subject => {
+    const renderOutcomeNode = (outcome: LearningOutcome) => {
+      const outcomeUri = outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`;
+      const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
+      let block = `<${outcomeUri}> a eduschema:LearningOutcome ;\n    rdfs:label "${outcome.text}"@en`;
+      if (outcome.text_et) {
+        block += `,\n        "${outcome.text_et}"@et`;
+      }
+      block += ` ;\n`;
+      if (outcome.school_level) {
+        block += `    eduschema:schoolLevel "${outcome.school_level}" ;\n`;
+      }
+      if (outcome.grade_range) {
+        block += `    eduschema:gradeRange "${outcome.grade_range}" ;\n`;
+      }
+      if (outcome.expects && outcome.expects.length > 0) {
+        block += `    eduschema:expects "${outcome.expects.join('", "')}" ;\n`;
+      }
+      if (outcome.consists_of && outcome.consists_of.length > 0) {
+        block += `    eduschema:consistsOf "${outcome.consists_of.join('", "')}" ;\n`;
+      }
+      if (outcomeSkills.length > 0) {
+        outcomeSkills.forEach((skill, idx) => {
+          const skillUri = `https://oppekava.edu.ee/skillbits/${skill.id}`;
+          block += `    eduschema:hasSkillBit <${skillUri}>`;
+          block += idx === outcomeSkills.length - 1 ? ` ;\n` : ` ,\n`;
+        });
+      }
+      block += `    eduschema:status "${outcome.status}" .\n\n`;
+      return block;
+    };
+
+    const renderTopicNode = (node: TopicTreeNode, parentUri?: string) => {
+      const topic = node.topic;
+      const topicUri = topic.uri || `https://oppekava.edu.ee/topics/${topic.id}`;
+      let block = `<${topicUri}> a eduschema:Topic ;\n    rdfs:label "${topic.name}"@en`;
+      if (topic.name_et) {
+        block += `,\n        "${topic.name_et}"@et`;
+      }
+      block += ` ;\n`;
+
+      if (topic.description) {
+        block += `    rdfs:comment "${topic.description}" ;\n`;
+      }
+      if (parentUri) {
+        block += `    eduschema:parentTopic <${parentUri}> ;\n`;
+      }
+
+      const childUris = node.children.map((child) => child.topic.uri || `https://oppekava.edu.ee/topics/${child.topic.id}`);
+      if (childUris.length > 0) {
+        childUris.forEach((childUri, idx) => {
+          block += `    eduschema:hasSubtopic <${childUri}>`;
+          block += idx < childUris.length - 1 ? ` ,\n` : ` ;\n`;
+        });
+      }
+
+      const topicOutcomes = outcomes.filter((o) => o.topic_id === topic.id);
+      if (topicOutcomes.length > 0) {
+        topicOutcomes.forEach((outcome, idx) => {
+          const outcomeUri = outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`;
+          block += `    eduschema:hasOutcome <${outcomeUri}>`;
+          block += idx < topicOutcomes.length - 1 ? ` ,\n` : ` ;\n`;
+        });
+      }
+
+      block += `    eduschema:status "${topic.status}" .\n\n`;
+      topicOutcomes.forEach((outcome) => {
+        block += renderOutcomeNode(outcome);
+      });
+      node.children.forEach((child) => {
+        block += renderTopicNode(child, topicUri);
+      });
+      return block;
+    };
+
+    subjects.forEach((subject) => {
       const subjectUri = subject.uri || `https://oppekava.edu.ee/subjects/${subject.id}`;
       turtle += `<${subjectUri}> a eduschema:Subject ;\n    rdfs:label "${subject.title}"@en ;\n`;
 
       if (subject.description) {
         turtle += `    rdfs:comment "${subject.description}" ;\n`;
       }
-      
-      const subjectTopics = topics.filter(t => t.subject_id === subject.id);
+
+      const subjectTopics = topicTreeBySubject[subject.id] ?? [];
       if (subjectTopics.length > 0) {
-        subjectTopics.forEach((topic, idx) => {
-          const topicUri = topic.uri || `https://oppekava.edu.ee/topics/${topic.id}`;
+        subjectTopics.forEach((topicNode, idx) => {
+          const topicUri = topicNode.topic.uri || `https://oppekava.edu.ee/topics/${topicNode.topic.id}`;
           turtle += `    eduschema:hasTopic <${topicUri}>`;
-          if (idx < subjectTopics.length - 1) {
-            turtle += ` ,\n`;
-          } else {
-            turtle += ` ;\n`;
-          }
+          turtle += idx < subjectTopics.length - 1 ? ` ,\n` : ` ;\n`;
         });
       }
+
       turtle += `    eduschema:status "${subject.status}" .\n\n`;
 
-      subjectTopics.forEach(topic => {
-        const topicUri = topic.uri || `https://oppekava.edu.ee/topics/${topic.id}`;
-        turtle += `<${topicUri}> a eduschema:Topic ;\n    rdfs:label "${topic.name}"@en`;
-        
-        if (topic.name_et) {
-          turtle += `,\n        "${topic.name_et}"@et`;
-        }
-        turtle += ` ;\n`;
-
-        if (topic.description) {
-          turtle += `    rdfs:comment "${topic.description}" ;\n`;
-        }
-
-        const topicOutcomes = outcomes.filter(o => o.topic_id === topic.id);
-        if (topicOutcomes.length > 0) {
-          topicOutcomes.forEach((outcome, idx) => {
-            const outcomeUri = outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`;
-            turtle += `    eduschema:hasOutcome <${outcomeUri}>`;
-            if (idx < topicOutcomes.length - 1) {
-              turtle += ` ,\n`;
-            } else {
-              turtle += ` ;\n`;
-            }
-          });
-        }
-        turtle += `    eduschema:status "${topic.status}" .\n\n`;
-
-        topicOutcomes.forEach(outcome => {
-          const outcomeUri = outcome.uri || `https://oppekava.edu.ee/outcomes/${outcome.id}`;
-          const outcomeSkills = skillBitsByOutcome[outcome.id] ?? [];
-          turtle += `<${outcomeUri}> a eduschema:LearningOutcome ;\n    rdfs:label "${outcome.text}"@en`;
-          
-          if (outcome.text_et) {
-            turtle += `,\n        "${outcome.text_et}"@et`;
-          }
-          turtle += ` ;\n`;
-          turtle += `    eduschema:schoolLevel "${outcome.school_level}" ;\n`;
-          if (outcome.grade_range) {
-            turtle += `    eduschema:gradeRange "${outcome.grade_range}" ;\n`;
-          }
-          if (outcome.expects && outcome.expects.length > 0) {
-            turtle += `    eduschema:expects "${outcome.expects.join('", "')}" ;\n`;
-          }
-          if (outcome.consists_of && outcome.consists_of.length > 0) {
-            turtle += `    eduschema:consistsOf "${outcome.consists_of.join('", "')}" ;\n`;
-          }
-          if (outcomeSkills.length > 0) {
-            outcomeSkills.forEach((skill, idx) => {
-              const skillUri = `https://oppekava.edu.ee/skillbits/${skill.id}`;
-              turtle += `    eduschema:hasSkillBit <${skillUri}>`;
-              turtle += idx === outcomeSkills.length - 1 ? ` ;\n` : ` ,\n`;
-            });
-          }
-          turtle += `    eduschema:status "${outcome.status}" .\n\n`;
-        });
+      subjectTopics.forEach((topicNode) => {
+        turtle += renderTopicNode(topicNode);
       });
     });
 
