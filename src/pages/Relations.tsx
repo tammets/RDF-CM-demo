@@ -206,7 +206,7 @@ export default function Relations() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1 border-slate-200/70">
+          <Card className="lg:col-span-1 border-slate-200">
             <CardHeader className="pb-4 border-b border-slate-100/80">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="w-5 h-5 text-purple-600" />
@@ -319,7 +319,7 @@ export default function Relations() {
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedOutcome?.id === outcome.id
                             ? 'border-purple-300 bg-purple-50/60'
-                            : 'border-slate-200/70 hover:border-purple-300 hover:bg-slate-50'
+                            : 'border-slate-200 hover:border-purple-300 hover:bg-slate-50'
                         }`}
                         onClick={() => handleOutcomeClick(outcome)}
                       >
@@ -530,7 +530,7 @@ export default function Relations() {
                 )}
               </>
             ) : (
-              <Card>
+              <Card className="border-slate-200">
                 <CardContent className="py-20">
                   <div className="text-center text-slate-500">
                     <Network className="w-16 h-16 mx-auto mb-4 text-slate-300" />

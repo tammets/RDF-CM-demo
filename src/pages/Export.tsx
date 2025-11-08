@@ -509,7 +509,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6 min-h-[80vh]">
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 border-gray-200">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -609,7 +609,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
           </Card>
 
           <div className="space-y-6">
-            <Card>
+            <Card className="border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>API Endpoints</span>
@@ -672,7 +672,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-gray-200">
               <CardHeader>
                 <CardTitle>Format Details</CardTitle>
               </CardHeader>
