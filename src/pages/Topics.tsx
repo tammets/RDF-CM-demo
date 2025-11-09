@@ -109,10 +109,11 @@ export default function Topics() {
   };
 
   const handleEdit = (topic: TopicEntity) => {
+    const title = topic.name || topic.name_et || "";
     setEditingTopic(topic);
     setFormData({
-      name: topic.name || "",
-      name_et: topic.name_et || "",
+      name: title,
+      name_et: topic.name_et || title,
       description: topic.description || "",
       subject_id: topic.subject_id || "",
       parent_topic_id: topic.parent_topic_id ?? null,
@@ -223,6 +224,48 @@ export default function Topics() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 m-6">
                 <div className="space-y-2">
+                  <Label htmlFor="name">Title *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value, name_et: e.target.value })
+                    }
+                    placeholder="e.g. Algebra"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <div className="mt-2 grid grid-cols-1">
+                    <select
+                      id="status"
+                      value={formData.status}
+                      onChange={(event) =>
+                        setFormData({
+                          ...formData,
+                          status: event.target.value as TopicFormData["status"],
+                        })
+                      }
+                      className={nativeSelectClass}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                    <ChevronDown aria-hidden="true" className={chevronClass} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Topic description"
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="subject_id">Subject *</Label>
                   <div className="mt-2 grid grid-cols-1">
                     <select
@@ -281,38 +324,7 @@ export default function Topics() {
                     <p className="text-xs text-slate-500">Only topics from the selected subject are available.</p>
                   </div>
                 ) : null}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name (English) *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Algebra"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name_et">Name (Estonian)</Label>
-                    <Input
-                      id="name_et"
-                      value={formData.name_et}
-                      onChange={(e) => setFormData({ ...formData, name_et: e.target.value })}
-                      placeholder="e.g. Algebra"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Topic description"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="order_index">Display order</Label>
                     <Input
@@ -329,34 +341,9 @@ export default function Topics() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <div className="mt-2 grid grid-cols-1">
-                      <select
-                        id="status"
-                        value={formData.status}
-                        onChange={(event) =>
-                          setFormData({
-                            ...formData,
-                            status: event.target.value as TopicFormData["status"],
-                          })
-                        }
-                        className={nativeSelectClass}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                      </select>
-                      <ChevronDown aria-hidden="true" className={chevronClass} />
-                    </div>
+                    <Label htmlFor="uri">RDF URI</Label>
+                    <Input id="uri" value={formData.uri || "Will be generated"} disabled readOnly />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="uri">RDF URI</Label>
-                  <Input
-                    id="uri"
-                    value={formData.uri}
-                    onChange={(e) => setFormData({ ...formData, uri: e.target.value })}
-                    placeholder="e.g. https://oppekava.edu.ee/topics/algebra"
-                  />
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -408,24 +395,41 @@ export default function Topics() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead>Title</TableHead>
                       <TableHead>Subject</TableHead>
                       <TableHead>Parent</TableHead>
                       <TableHead>Display Order</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedTopics.map((topic) => {
-                      const topicTitle = topic.name_et || topic.name || "Untitled topic";
+                      const topicTitle = topic.name || topic.name_et || "Untitled topic";
                       const parentTopic =
                         topic.parent_topic_id ? topicLookup.get(topic.parent_topic_id) : null;
+                      const isPublished = topic.status === "published";
                       return (
                         <TableRow key={topic.id}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium text-slate-900">{topicTitle}</p>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-3">
+                                <p className="font-medium text-slate-900">{topicTitle}</p>
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                  <span
+                                    className={`inline-flex h-2.5 w-2.5 items-center justify-center rounded-full ${
+                                      isPublished ? "bg-emerald-500/30" : "bg-amber-400/30"
+                                    }`}
+                                    aria-label={isPublished ? "Published" : "Draft"}
+                                  >
+                                    <span
+                                      className={`inline-flex h-1.5 w-1.5 rounded-full ${
+                                        isPublished ? "bg-emerald-600" : "bg-amber-500"
+                                      }`}
+                                    />
+                                  </span>
+                                  <span>{isPublished ? "Published" : "Draft"}</span>
+                                </div>
+                              </div>
                               {topic.name_et && topic.name && topic.name !== topic.name_et && (
                                 <p className="text-sm text-slate-500">{topic.name}</p>
                               )}
@@ -444,11 +448,6 @@ export default function Topics() {
                             )}
                           </TableCell>
                           <TableCell>{topic.order_index ?? 0}</TableCell>
-                          <TableCell>
-                            <Badge variant={topic.status === "published" ? "default" : "secondary"}>
-                              {topic.status === "published" ? "Published" : "Draft"}
-                            </Badge>
-                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button

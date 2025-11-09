@@ -459,17 +459,36 @@ export default function Outcomes() {
                       <TableHead>School Level</TableHead>
                       <TableHead>Grade</TableHead>
                       <TableHead>Skill-bits</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedOutcomes.map((outcome) => {
                       const outcomeLabel = outcome.text_et || outcome.text || "Untitled learning outcome";
+                      const isPublished = outcome.status === "published";
                       return (
                         <TableRow key={outcome.id}>
                           <TableCell>
-                            <p className="text-sm text-slate-900 line-clamp-2">{outcomeLabel}</p>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-slate-900 line-clamp-2">{outcomeLabel}</p>
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                  <span
+                                    className={`inline-flex h-2.5 w-2.5 items-center justify-center rounded-full ${
+                                      isPublished ? "bg-emerald-500/30" : "bg-amber-400/30"
+                                    }`}
+                                    aria-label={isPublished ? "Published" : "Draft"}
+                                  >
+                                    <span
+                                      className={`inline-flex h-1.5 w-1.5 rounded-full ${
+                                        isPublished ? "bg-emerald-600" : "bg-amber-500"
+                                      }`}
+                                    />
+                                  </span>
+                                  <span>{isPublished ? "Published" : "Draft"}</span>
+                                </div>
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
@@ -497,11 +516,6 @@ export default function Outcomes() {
                                 Manage
                               </Button>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={outcome.status === "published" ? "default" : "secondary"}>
-                              {outcome.status === "published" ? "Published" : "Draft"}
-                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">

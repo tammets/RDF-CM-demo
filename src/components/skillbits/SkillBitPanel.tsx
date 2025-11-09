@@ -127,7 +127,7 @@ export function SkillBitPanel({ outcome }: SkillBitPanelProps) {
   const isSubmitting = upsertMutation.isPending || deleteMutation.isPending || reorderMutation.isPending;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:m-3 md:m-4">
       <div>
         <p className="text-sm text-slate-500">Skill-bits linked to</p>
         <p className="font-semibold text-slate-900">{outcome.text_et || outcome.text || "Unnamed outcome"}</p>
