@@ -118,6 +118,10 @@ export default function Dashboard() {
               <p className="text-sm text-slate-600">
                 Use this dashboard to curate the national curriculum, track publication status, and generate RDF exports.
               </p>
+              <p className="text-sm text-slate-600 mt-4">
+                Although information is originally sourced from https://oppekava.edu.ee/, there is no direct connection to the original dataset and
+                the service extends it based on input from Tallinn University's Centre for Educational Technology researchers.
+              </p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 text-sm text-slate-700">
