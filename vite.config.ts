@@ -13,6 +13,7 @@ export default defineConfig(({ command }) => ({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@tanstack/react-query': path.resolve(__dirname, './src/lib/simpleQuery.tsx'),
+      '@heroicons/react/20/solid': path.resolve(__dirname, './src/lib/heroicons.tsx'),
     },
   },
 }))

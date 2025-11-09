@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { curriculum, type Subject, type Topic, type LearningOutcome, type SkillBit } from "@/api/curriculumClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -611,17 +612,12 @@ eduschema:totalItems a owl:DatatypeProperty ;
           <div className="space-y-6">
             <Card className="border-gray-200">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between mb-4">
                   <span>API Endpoints</span>
-                  <a
-                    href="/api/docs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    Documentation
+                  <Link to="/documentation" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                    Integration guide
                     <ExternalLink className="w-3 h-3" />
-                  </a>
+                  </Link>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -674,7 +670,7 @@ eduschema:totalItems a owl:DatatypeProperty ;
 
             <Card className="border-gray-200">
               <CardHeader>
-                <CardTitle>Format Details</CardTitle>
+                <CardTitle className="mb-4">Format Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-600">
                 <div>

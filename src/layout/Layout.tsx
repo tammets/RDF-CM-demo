@@ -10,6 +10,7 @@ import {
   LogOut,
   Network,
   Waypoints,
+  Book,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ const navigationItems = [
 ];
 
 const dataManagement = [{ title: "Export & API", url: "/export", icon: Download }];
+
+const documentationItems = [{ title: "API Integration", url: "/documentation", icon: Book }];
 
 export default function Layout() {
   const location = useLocation();
@@ -99,6 +102,29 @@ export default function Layout() {
                     active
                       ? "bg-indigo-50 text-indigo-700 font-medium"
                       : "text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">
+              Documentation
+            </p>
+            {documentationItems.map((item) => {
+              const active = location.pathname === item.url;
+              return (
+                <Link
+                  key={item.title}
+                  to={item.url}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all ${
+                    active
+                      ? "bg-slate-100 text-slate-900 font-medium"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   <item.icon className="w-4 h-4" />
