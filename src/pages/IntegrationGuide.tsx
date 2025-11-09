@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, PlugZap } from "lucide-react";
-import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import { AlertTriangle, ExternalLink, PlugZap } from "lucide-react";
 
 const endpoints = [
   {
@@ -49,7 +48,7 @@ export default function IntegrationGuide() {
         <div className="rounded-md border-l-4 border-yellow-400 bg-yellow-50 p-4">
           <div className="flex">
             <div className="shrink-0">
-              <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-yellow-400" />
+              <AlertTriangle aria-hidden="true" className="h-5 w-5 text-yellow-400" />
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">

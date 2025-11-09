@@ -8,8 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@tanstack/react-query": ["src/lib/simpleQuery.tsx"],
-      "@heroicons/react/20/solid": ["src/lib/heroicons.tsx"]
+      "@tanstack/react-query": ["src/lib/simpleQuery.tsx"]
     }
   }
 }
