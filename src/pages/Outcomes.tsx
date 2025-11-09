@@ -304,11 +304,11 @@ export default function Outcomes() {
                         }}
                         className={nativeSelectClass}
                       >
-                        <option value="I">Stage I (grades 1-3)</option>
-                        <option value="II">Stage II (grades 4-6)</option>
-                        <option value="III">Stage III (grades 7-9)</option>
-                        <option value="Gymnasium">Upper secondary (grades 10-12)</option>
-                        <option value="University">University</option>
+                        <option value="I">I kooliaste (1.-3. klass)</option>
+                        <option value="II">II kooliaste (4.-6. klass)</option>
+                        <option value="III">III kooliaste (7.-9. klass)</option>
+                        <option value="Gymnasium">Gümnaasium (10.-12. klass)</option>
+                        <option value="University">Ülikool</option>
                         <option value="All">All levels</option>
                       </select>
                       <ChevronDown aria-hidden="true" className={chevronClass} />
@@ -431,11 +431,11 @@ export default function Outcomes() {
                     className={nativeSelectClass}
                   >
                     <option value="all">All levels</option>
-                    <option value="I">Stage I</option>
-                    <option value="II">Stage II</option>
-                    <option value="III">Stage III</option>
-                    <option value="Gymnasium">Upper secondary</option>
-                    <option value="University">University</option>
+                    <option value="I">I kooliaste</option>
+                    <option value="II">II kooliaste</option>
+                    <option value="III">III kooliaste</option>
+                    <option value="Gymnasium">Gümnaasium</option>
+                    <option value="University">Ülikool</option>
                   </select>
                   <ChevronDown aria-hidden="true" className={chevronClass} />
                 </div>
