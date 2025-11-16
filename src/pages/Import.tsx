@@ -89,23 +89,21 @@ export default function ImportPage() {
     (summary?.skillBits ?? 0);
 
   return (
-    <div className="space-y-6 p-8">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Data management
-        </p>
-        <h1 className="text-2xl font-semibold text-slate-900">Import curriculum JSON</h1>
-        <p className="text-sm text-slate-500">
-          Upload a JSON export that follows the schema provided in <code>public/data/oppekava.json</code>.
-          The selected dataset immediately becomes the active curriculum so you can continue editing the data
-          within the UI.
-        </p>
-      </div>
+    <div className="p-8 bg-slate-50 min-h-screen">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Import Curriculum Data</h1>
+          <p className="text-slate-600">
+            Upload a JSON export that follows the schema provided in <code>public/data/oppekava.json</code>.
+            The selected dataset immediately becomes the active curriculum so you can continue editing the data
+            within the UI.
+          </p>
+        </div>
 
-      <Card className="space-y-4">
+      <Card className="space-y-4 border-gray-200">
         <CardHeader className="space-y-1">
           <CardTitle>Upload an RDF curriculum export</CardTitle>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             The import accepts the same structure that the export page produces (subjects, topics, learning
             outcomes, skill bits/sub skills) and stores the imported payload locally so you can immediately
             continue editing.
@@ -143,24 +141,24 @@ export default function ImportPage() {
           </div>
           <div className="space-y-3 text-sm text-slate-600">
             <div className="space-y-1">
-              <p className="font-semibold text-slate-800">Schema highlights</p>
-              <ul className="space-y-1 pl-5 text-slate-500">
+              <p className="font-semibold text-slate-900">Schema highlights</p>
+              <ul className="space-y-1 pl-5 text-slate-600">
                 {schemaHighlights.map((item) => (
                   <li key={item.label}>
-                    <span className="font-medium text-slate-700">{item.label}</span>: {item.description}
+                    <span className="font-medium text-slate-900">{item.label}</span>: {item.description}
                   </li>
                 ))}
               </ul>
             </div>
-            <Alert className="bg-white">
-              <AlertDescription>
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-sm text-blue-900">
                 Only subjects, topics, learning outcomes, and optional skill bits are imported for now. The JSON
                 structure is aligned with the RDF exports so you can reuse the same payload across tooling.
               </AlertDescription>
             </Alert>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Sample payload</p>
-              <pre className="mt-2 rounded-xl border border-slate-200 bg-slate-900/80 p-3 text-xs text-slate-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Sample payload</p>
+              <pre className="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-3 text-xs text-green-400">
                 {`{
   "subjects": [
     "Mathematics",
@@ -202,36 +200,37 @@ export default function ImportPage() {
       )}
 
       {summary && (
-        <Card>
+        <Card className="border-gray-200">
           <CardHeader className="flex items-center justify-between gap-4">
             <div>
               <CardTitle>Imported {totalItems} curriculum entries</CardTitle>
-              <p className="text-xs text-slate-500">The current dataset reflects your uploaded JSON.</p>
+              <p className="text-xs text-slate-600">The current dataset reflects your uploaded JSON.</p>
             </div>
             <CheckCircle className="h-8 w-8 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-6 text-sm text-slate-600">
               <div>
-                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Subjects</dt>
+                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Subjects</dt>
                 <dd className="text-lg font-semibold text-slate-900">{summary.subjects}</dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Topics</dt>
+                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Topics</dt>
                 <dd className="text-lg font-semibold text-slate-900">{summary.topics}</dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Outcomes</dt>
+                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Outcomes</dt>
                 <dd className="text-lg font-semibold text-slate-900">{summary.outcomes}</dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Skill bits</dt>
+                <dt className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Skill bits</dt>
                 <dd className="text-lg font-semibold text-slate-900">{summary.skillBits}</dd>
               </div>
             </dl>
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }
