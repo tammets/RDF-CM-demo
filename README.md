@@ -10,6 +10,39 @@ This repository contains a prototype UI for managing the Estonian national curri
 - **RDF-focused export page** with JSON-LD, Turtle, and simple JSON previews, plus schema reference and one-click download/copy actions.
 - **Skillbit (osaoskus) editing** directly inside outcome dialogs, subject drill-downs, and the browse tree with manual ordering and RDF links.
 - **Static prototype data** persisted via `localStorage` so edits stick between refreshes without a backend.
+- **JSON import workflow** on the `/import` page where you select a schema-aligned export (e.g., `public/data/oppekava.json`) and immediately replace the active curriculum dataset for further editing.
+
+## Import schema sample
+
+The import accepts the same JSON schema that the export page produces. A minimal payload looks like this:
+
+```json
+{
+  "subjects": ["Mathematics", "Programming"],
+  "topics": [
+    {
+      "text": "Algebra",
+      "subject": ["Mathematics"],
+      "parent_topic": [],
+      "url": "https://oppekava.edu.ee/topics/algebra"
+    }
+  ],
+  "learning_outcomes": [
+    {
+      "text": "Solves linear equations.",
+      "topic": ["Algebra"],
+      "school_level": ["III kooliaste"],
+      "url": "https://oppekava.edu.ee/outcomes/algebra-1"
+    }
+  ],
+  "skill_bits": [
+    {
+      "label": "Identifies denominators",
+      "belongs_to": ["https://oppekava.edu.ee/outcomes/algebra-1"]
+    }
+  ]
+}
+```
 
 ## Prototype vision
 

@@ -779,7 +779,7 @@ function cascadeDeleteOutcome(outcomeId: string) {
   }));
 }
 
-type RawDataset = {
+export type RawDataset = {
   subjects?: string[];
   topics?: Array<{
     text?: string;
@@ -993,13 +993,7 @@ async function fetchSplitDataset(): Promise<CurriculumState | null> {
   }
 }
 
-async function loadFromCombinedFile(): Promise<CurriculumState> {
-  const response = await fetch(resolvePublicAsset("data/oppekava.json"), { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`Failed to load dataset: ${response.status} ${response.statusText}`);
-  }
-  const raw = (await response.json()) as RawDataset;
-
+function buildStateFromCombinedDataset(raw: RawDataset): CurriculumState {
   const subjectNames = new Set<string>();
   if (Array.isArray(raw.subjects)) {
     raw.subjects.forEach((name) => {
@@ -1264,6 +1258,15 @@ async function loadFromCombinedFile(): Promise<CurriculumState> {
   };
 }
 
+async function loadFromCombinedFile(): Promise<CurriculumState> {
+  const response = await fetch(resolvePublicAsset("data/oppekava.json"), { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Failed to load dataset: ${response.status} ${response.statusText}`);
+  }
+  const raw = (await response.json()) as RawDataset;
+  return buildStateFromCombinedDataset(raw);
+}
+
 async function loadDataset(force = false) {
   if (typeof window === "undefined" || typeof fetch === "undefined") {
     return;
@@ -1334,6 +1337,15 @@ export const curriculum = {
       });
       return clone(counts);
     },
+  },
+  async importFromRaw(raw: RawDataset) {
+    const nextState = buildStateFromCombinedDataset(raw);
+    state = nextState;
+    datasetSnapshot = clone(state);
+    datasetLoaded = true;
+    persist();
+    notify();
+    return clone(state);
   },
   async load(force = false) {
     try {

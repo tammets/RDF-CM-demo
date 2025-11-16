@@ -6,6 +6,7 @@ import {
   BookMarked,
   Target,
   Download,
+  UploadCloud,
   Search,
   LogOut,
   Network,
@@ -25,7 +26,10 @@ const navigationItems = [
   { title: "Relations", url: "/relations", icon: Network },
 ];
 
-const dataManagement = [{ title: "Export & API", url: "/export", icon: Download }];
+const dataManagement = [
+  { title: "Import JSON", url: "/import", icon: UploadCloud },
+  { title: "Export & API", url: "/export", icon: Download },
+];
 
 const documentationItems = [{ title: "API Integration", url: "/documentation", icon: Book }];
 
