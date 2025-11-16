@@ -11,6 +11,18 @@ This repository contains a prototype UI for managing the Estonian national curri
 - **Skillbit (osaoskus) editing** directly inside outcome dialogs, subject drill-downs, and the browse tree with manual ordering and RDF links.
 - **Static prototype data** persisted via `localStorage` so edits stick between refreshes without a backend.
 
+## Prototype vision
+
+If this were a fully working service, it would let curriculum authors and administrators—
+
+- Audit and edit every Subject, Topic, Learning Outcome, and Skillbit through secure CRUD APIs with validation and approval workflows.
+- Track versions per agency or publication date, compare drafts visually, and revert or publish changes with tagging and release notes.
+- Manage permissions so editors, reviewers, and viewers only see the actions appropriate for their role plus an audit trail of who changed what.
+- Schedule curriculum publications, notify downstream systems (e.g., SIS or content platforms), and keep RDF exports aligned with the latest published release.
+- Provide rich reporting: overall health dashboards, topic coverage maps, and export previews (JSON-LD, Turtle, CSV) with schema guidance and download/copy helpers.
+
+These scenarios inform the prototype flows even though the current implementation stays frontend-only with in-memory/localStorage data.
+
 ## Tech stack
 
 - [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
