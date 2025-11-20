@@ -637,6 +637,14 @@ eduschema:totalItems a owl:DatatypeProperty ;
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/outcomes/:id</p>
                   <p className="text-xs text-slate-500">Single learning outcome with relations</p>
                 </div>
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs font-mono text-slate-700 mb-1">GET /api/skillbits</p>
+                  <p className="text-xs text-slate-500">List all skillbits</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs font-mono text-slate-700 mb-1">GET /api/skillbits/:id</p>
+                  <p className="text-xs text-slate-500">Single skillbit</p>
+                </div>
                 <div className="p-3 bg-slate-50 rounded-lg border-2 border-indigo-200">
                   <p className="text-xs font-mono text-slate-700 mb-1">GET /api/export.jsonld</p>
                   <p className="text-xs text-slate-500">Full export in JSON-LD format</p>
